@@ -1,0 +1,17 @@
+C:\Users\adiza\HSMS\src\HSMS.Application\bin\Release\net8.0\HSMS.Application.deps.json
+C:\Users\adiza\HSMS\src\HSMS.Application\bin\Release\net8.0\HSMS.Application.dll
+C:\Users\adiza\HSMS\src\HSMS.Application\bin\Release\net8.0\HSMS.Application.pdb
+C:\Users\adiza\HSMS\src\HSMS.Application\bin\Release\net8.0\HSMS.Persistence.dll
+C:\Users\adiza\HSMS\src\HSMS.Application\bin\Release\net8.0\HSMS.Shared.dll
+C:\Users\adiza\HSMS\src\HSMS.Application\bin\Release\net8.0\HSMS.Persistence.pdb
+C:\Users\adiza\HSMS\src\HSMS.Application\bin\Release\net8.0\HSMS.Shared.pdb
+C:\Users\adiza\HSMS\src\HSMS.Application\obj\Release\net8.0\HSMS.Application.csproj.AssemblyReference.cache
+C:\Users\adiza\HSMS\src\HSMS.Application\obj\Release\net8.0\HSMS.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\adiza\HSMS\src\HSMS.Application\obj\Release\net8.0\HSMS.Application.AssemblyInfoInputs.cache
+C:\Users\adiza\HSMS\src\HSMS.Application\obj\Release\net8.0\HSMS.Application.AssemblyInfo.cs
+C:\Users\adiza\HSMS\src\HSMS.Application\obj\Release\net8.0\HSMS.Application.csproj.CoreCompileInputs.cache
+C:\Users\adiza\HSMS\src\HSMS.Application\obj\Release\net8.0\HSMS.App.4C5ECDAD.Up2Date
+C:\Users\adiza\HSMS\src\HSMS.Application\obj\Release\net8.0\HSMS.Application.dll
+C:\Users\adiza\HSMS\src\HSMS.Application\obj\Release\net8.0\refint\HSMS.Application.dll
+C:\Users\adiza\HSMS\src\HSMS.Application\obj\Release\net8.0\HSMS.Application.pdb
+C:\Users\adiza\HSMS\src\HSMS.Application\obj\Release\net8.0\ref\HSMS.Application.dll

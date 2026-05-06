@@ -1,0 +1,406 @@
+<Window x:Class="HSMS.Desktop.MaintenanceWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        xmlns:primitives="clr-namespace:System.Windows.Controls.Primitives;assembly=PresentationFramework"
+        xmlns:local="clr-namespace:HSMS.Desktop"
+        Title="Admin Setup — HSMS"
+        Height="680"
+        Width="1100"
+        MinHeight="520"
+        MinWidth="880"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource BrushSurface}"
+        FontFamily="Segoe UI">
+    <Window.Resources>
+        <local:ZeroIdToEmptyStringConverter x:Key="ZeroIdToEmptyStringConverter"/>
+        <!--
+          Use CalendarItem styling (not CalendarDayButton) to avoid WPF template type-mismatch crashes.
+          This still makes the calendar visually bigger for keyboard date selection.
+        -->
+        <Style x:Key="BigCalendarItemStyle" TargetType="{x:Type primitives:CalendarItem}">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Width" Value="34"/>
+        </Style>
+
+        <Style x:Key="BigCalendarStyle" TargetType="{x:Type Calendar}">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="CalendarItemStyle" Value="{StaticResource BigCalendarItemStyle}"/>
+        </Style>
+
+        <Style x:Key="AdminTabItemStyle" TargetType="{x:Type TabItem}">
+            <Setter Property="Foreground" Value="{StaticResource BrushMuted}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TabItem}">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter ContentSource="Header"
+                                              RecognizesAccessKey="True"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#EEF6FF"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#C9E1FF"/>
+                                <Setter Property="Foreground" Value="{StaticResource BrushPrimary}"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#F6F8FB"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="10"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Admin Setup" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource BrushPrimary}"/>
+
+        <TabControl Grid.Row="2"
+                    Background="{StaticResource BrushCard}"
+                    BorderBrush="{StaticResource BrushBorder}"
+                    BorderThickness="1"
+                    Padding="12">
+            <TabControl.Resources>
+                <Style TargetType="{x:Type TabItem}" BasedOn="{StaticResource AdminTabItemStyle}"/>
+            </TabControl.Resources>
+
+            <TabItem Header="Sterilizers">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="12"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="10"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" HorizontalAlignment="Stretch" Background="#F8FAFD" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="14,10">
+                        <TextBlock Text="Tip: select a row and edit fields directly. Model is free text (no preset list). Use Purchase Date format yyyy-MM-dd."
+                                   Foreground="{StaticResource BrushMuted}" FontSize="12" TextWrapping="Wrap"/>
+                    </Border>
+
+                    <Border Grid.Row="2" HorizontalAlignment="Stretch" Background="White" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="10">
+                        <DataGrid Name="SterilizersGrid"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  HorizontalAlignment="Stretch"
+                                  HorizontalScrollBarVisibility="Auto">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID" Binding="{Binding SterilizerId, Converter={StaticResource ZeroIdToEmptyStringConverter}}" IsReadOnly="True" Width="70"/>
+                                <DataGridTextColumn Header="Sterilizer No" Binding="{Binding SterilizerNo, UpdateSourceTrigger=PropertyChanged}" Width="140"/>
+                                <DataGridTextColumn Header="Model" Binding="{Binding Model, UpdateSourceTrigger=PropertyChanged}" MinWidth="140" Width="*"/>
+                                <DataGridTextColumn Header="Manufacturer" Binding="{Binding Manufacturer, UpdateSourceTrigger=PropertyChanged}" MinWidth="160" Width="*"/>
+                                <DataGridTemplateColumn Header="Purchase Date" Width="150" IsReadOnly="False">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding PurchaseDate, StringFormat={}{0:yyyy-MM-dd}}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                        <DataTemplate>
+                                            <DatePicker x:Name="PurchaseDatePicker"
+                                                        SelectedDate="{Binding PurchaseDate, UpdateSourceTrigger=PropertyChanged}"
+                                                        SelectedDateFormat="Short"
+                                                        DisplayDateEnd="{x:Static sys:DateTime.Today}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellEditingTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}" IsReadOnly="True" Width="90"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="Add" Style="{StaticResource SecondaryToolbarButton}" MinWidth="95" Margin="0,0,10,0" Click="AddSterilizer_OnClick"/>
+                        <Button Content="Save" Style="{StaticResource SuccessToolbarButton}" MinWidth="95" Margin="0,0,10,0" Click="SaveSterilizers_OnClick"/>
+                        <Button Content="Delete" Style="{StaticResource SecondaryToolbarButton}" MinWidth="95" Margin="0,0,10,0" Click="DeleteSterilizer_OnClick"/>
+                        <Button Content="Refresh" Style="{StaticResource SecondaryToolbarButton}" MinWidth="95" Click="RefreshAll_OnClick"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Departments">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="12"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="10"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" HorizontalAlignment="Stretch" Background="#F8FAFD" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="14,10">
+                        <TextBlock Text="Department names here are used in Register Load dropdowns."
+                                   Foreground="{StaticResource BrushMuted}" FontSize="12"/>
+                    </Border>
+
+                    <Border Grid.Row="2" HorizontalAlignment="Stretch" Background="White" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="10">
+                        <DataGrid Name="DepartmentsGrid" AutoGenerateColumns="False" CanUserAddRows="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID" Binding="{Binding DepartmentId, Converter={StaticResource ZeroIdToEmptyStringConverter}}" IsReadOnly="True" Width="70"/>
+                                <DataGridTextColumn Header="Department" Binding="{Binding DepartmentName, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
+                                <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}" IsReadOnly="True" Width="90"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="Add" Style="{StaticResource SecondaryToolbarButton}" MinWidth="95" Margin="0,0,10,0" Click="AddDepartment_OnClick"/>
+                        <Button Content="Save" Style="{StaticResource SuccessToolbarButton}" MinWidth="95" Margin="0,0,10,0" Click="SaveDepartments_OnClick"/>
+                        <Button Content="Delete" Style="{StaticResource SecondaryToolbarButton}" MinWidth="95" Margin="0,0,10,0" Click="DeleteDepartment_OnClick"/>
+                        <Button Content="Refresh" Style="{StaticResource SecondaryToolbarButton}" MinWidth="95" Click="RefreshAll_OnClick"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Dept Items">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="12"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="10"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" HorizontalAlignment="Stretch" Background="#F8FAFD" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="14,10">
+                        <TextBlock Text="Department items feed Item Description choices in Register Load."
+                                   Foreground="{StaticResource BrushMuted}" FontSize="12"/>
+                    </Border>
+
+                    <Border Grid.Row="2" HorizontalAlignment="Stretch" Background="White" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="10">
+                        <DataGrid Name="DepartmentItemsGrid" AutoGenerateColumns="False" CanUserAddRows="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID" Binding="{Binding DeptItemId, Converter={StaticResource ZeroIdToEmptyStringConverter}}" IsReadOnly="True" Width="70"/>
+                                <DataGridComboBoxColumn Header="Department"
+                                                        SelectedValueBinding="{Binding DepartmentId, UpdateSourceTrigger=PropertyChanged}"
+                                                        SelectedValuePath="DepartmentId"
+                                                        DisplayMemberPath="DepartmentName"
+                                                        ItemsSource="{Binding DepartmentLookup, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        Width="230"/>
+                                <DataGridTextColumn Header="Item description" Binding="{Binding ItemName, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
+                                <DataGridTextColumn Header="Default Pcs" Binding="{Binding DefaultPcs, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
+                                <DataGridTextColumn Header="Default Qty" Binding="{Binding DefaultQty, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="Add" Style="{StaticResource SecondaryToolbarButton}" MinWidth="95" Margin="0,0,10,0" Click="AddDepartmentItem_OnClick"/>
+                        <Button Content="Save" Style="{StaticResource SuccessToolbarButton}" MinWidth="95" Margin="0,0,10,0" Click="SaveDepartmentItems_OnClick"/>
+                        <Button Content="Delete" Style="{StaticResource SecondaryToolbarButton}" MinWidth="95" Margin="0,0,10,0" Click="DeleteDepartmentItem_OnClick"/>
+                        <Button Content="Refresh" Style="{StaticResource SecondaryToolbarButton}" MinWidth="95" Click="RefreshAll_OnClick"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Doctors/Departments">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="12"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="10"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" HorizontalAlignment="Stretch" Background="#F8FAFD" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="14,10">
+                        <TextBlock Text="Doctors/departments here are used by cycle-level Doctor/Room selection."
+                                   Foreground="{StaticResource BrushMuted}" FontSize="12"/>
+                    </Border>
+
+                    <Border Grid.Row="2" HorizontalAlignment="Stretch" Background="White" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="10">
+                        <DataGrid Name="DoctorsRoomsGrid" AutoGenerateColumns="False" CanUserAddRows="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID" Binding="{Binding DoctorRoomId, Converter={StaticResource ZeroIdToEmptyStringConverter}}" IsReadOnly="True" Width="70"/>
+                                <DataGridTextColumn Header="Doctor" Binding="{Binding DoctorName, UpdateSourceTrigger=PropertyChanged}" Width="220"/>
+                                <DataGridComboBoxColumn Header="Department"
+                                                        SelectedValueBinding="{Binding Room, UpdateSourceTrigger=PropertyChanged}"
+                                                        SelectedValuePath="DepartmentName"
+                                                        DisplayMemberPath="DepartmentName"
+                                                        ItemsSource="{Binding DepartmentLookup, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        Width="200"/>
+                                <DataGridTextColumn Header="Display" Binding="{Binding DisplayName}" IsReadOnly="True" Width="*"/>
+                                <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}" IsReadOnly="True" Width="90"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="Add" Style="{StaticResource SecondaryToolbarButton}" MinWidth="95" Margin="0,0,10,0" Click="AddDoctorRoom_OnClick"/>
+                        <Button Content="Save" Style="{StaticResource SuccessToolbarButton}" MinWidth="95" Margin="0,0,10,0" Click="SaveDoctorsRooms_OnClick"/>
+                        <Button Content="Delete" Style="{StaticResource SecondaryToolbarButton}" MinWidth="95" Margin="0,0,10,0" Click="DeleteDoctorRoom_OnClick"/>
+                        <Button Content="Refresh" Style="{StaticResource SecondaryToolbarButton}" MinWidth="95" Click="RefreshAll_OnClick"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Audit &amp; activity">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="10"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="260"/>
+                            <RowDefinition Height="14"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="120"/>
+                            <RowDefinition Height="14"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="140"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" Background="#F4F7FA" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                            <StackPanel>
+                                <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource BrushMuted}" LineHeight="18"
+                                           Text="Security &amp; compliance view (Admin only). Passwords and clinical free-text are never stored in audit payloads. Use filters to investigate sign-ins, profile changes, sterilization edits, and master data changes. Export supports Excel. Automatic rollback is not provided—use Old/New JSON for manual recovery if needed."/>
+                            </StackPanel>
+                        </Border>
+
+                        <Grid Grid.Row="1" Margin="0,4,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Style="{StaticResource CaptionLabel}" Text="From (local date)"/>
+                                <DatePicker Name="AuditFromDate" FontSize="13"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Style="{StaticResource CaptionLabel}" Text="To (local date)"/>
+                                <DatePicker Name="AuditToDate" FontSize="13"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="4">
+                                <TextBlock Style="{StaticResource CaptionLabel}" Text="User search"/>
+                                <TextBox Name="AuditUserSearchBox" ToolTip="Actor username or login-attempt id substring"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="6">
+                                <TextBlock Style="{StaticResource CaptionLabel}" Text="Actor account ID"/>
+                                <TextBox Name="AuditActorIdBox" ToolTip="Optional numeric account id for a per-user timeline"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,4,0,0">
+                            <TextBlock VerticalAlignment="Center" Style="{StaticResource CaptionLabel}" Text="Module contains" Margin="0,0,8,0"/>
+                            <TextBox Name="AuditModuleFilterBox" Width="160" Margin="0,0,16,0"/>
+                            <TextBlock VerticalAlignment="Center" Style="{StaticResource CaptionLabel}" Text="Action contains" Margin="0,0,8,0"/>
+                            <TextBox Name="AuditActionFilterBox" Width="180" Margin="0,0,16,0"/>
+                            <Button Name="AuditRefreshButton" Content="Refresh" Style="{StaticResource PrimaryButton}" MinWidth="110" Margin="0,0,10,0" Click="AuditRefreshButton_OnClick"/>
+                            <Button Name="AuditExportCsvButton" Content="Export log (CSV)" Style="{StaticResource SecondaryToolbarButton}" MinWidth="140" Click="AuditExportCsvButton_OnClick"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="4" Text="Audit log" FontWeight="SemiBold" Foreground="{StaticResource BrushPrimary}" FontSize="13"/>
+                        <DataGrid Grid.Row="5" Name="AuditLogGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                                  HeadersVisibility="Column" FontSize="12">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="UTC time" Binding="{Binding EventAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="130"/>
+                                <DataGridTextColumn Header="Actor" Binding="{Binding ActorUsername}" Width="100"/>
+                                <DataGridTextColumn Header="Actor ID" Binding="{Binding ActorAccountId}" Width="70"/>
+                                <DataGridTextColumn Header="Module" Binding="{Binding Module}" Width="90"/>
+                                <DataGridTextColumn Header="Action" Binding="{Binding Action}" Width="160"/>
+                                <DataGridTextColumn Header="Entity" Binding="{Binding EntityName}" Width="110"/>
+                                <DataGridTextColumn Header="Entity id" Binding="{Binding EntityId}" Width="90"/>
+                                <DataGridTextColumn Header="Device" Binding="{Binding ClientMachine}" Width="110"/>
+                                <DataGridTextColumn Header="Old values" Binding="{Binding OldValuesJson}" Width="*"/>
+                                <DataGridTextColumn Header="New values" Binding="{Binding NewValuesJson}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <TextBlock Grid.Row="6" Text="Security alerts (e.g. repeated failed logins)" FontWeight="SemiBold" Foreground="{StaticResource BrushPrimary}" FontSize="13"/>
+                        <DataGrid Grid.Row="7" Name="AuditAlertsGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MaxHeight="120">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="UTC time" Binding="{Binding EventAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="130"/>
+                                <DataGridTextColumn Header="Action" Binding="{Binding Action}" Width="200"/>
+                                <DataGridTextColumn Header="Device" Binding="{Binding ClientMachine}" Width="120"/>
+                                <DataGridTextColumn Header="Details" Binding="{Binding DetailsJson}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <TextBlock Grid.Row="8" Text="Recently signed-in (approx. activity)" FontWeight="SemiBold" Foreground="{StaticResource BrushPrimary}" FontSize="13"/>
+                        <DataGrid Grid.Row="9" Name="AuditActiveGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MaxHeight="140">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Account ID" Binding="{Binding AccountId}" Width="90"/>
+                                <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="140"/>
+                                <DataGridTextColumn Header="Role" Binding="{Binding Role}" Width="90"/>
+                                <DataGridTextColumn Header="Last login (UTC)" Binding="{Binding LastLoginAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="160"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <TextBlock Grid.Row="10" Text="High-volume sterilization updates (last hour, possible bulk edit)" FontWeight="SemiBold" Foreground="{StaticResource BrushPrimary}" FontSize="13"/>
+                        <DataGrid Grid.Row="11" Name="AuditVolumeGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MaxHeight="120">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Actor ID" Binding="{Binding ActorAccountId}" Width="80"/>
+                                <DataGridTextColumn Header="Username" Binding="{Binding ActorUsername}" Width="140"/>
+                                <DataGridTextColumn Header="Updates" Binding="{Binding UpdateCount}" Width="80"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <TextBlock Grid.Row="12" TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource BrushMuted}" Margin="0,4,0,0"
+                                   Text="Tip: set Actor account ID and Refresh to see a timeline for one user. Module filter examples: Security, Sterilization, Masters."/>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Accounts">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="12"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" HorizontalAlignment="Stretch" Background="#F8FAFD" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="14,10">
+                        <TextBlock TextWrapping="Wrap"
+                                   Text="Read-only list. Latest activity is the newest Security audit for that account (profile update, sign-in, registration)."
+                                   Foreground="{StaticResource BrushMuted}" FontSize="12"/>
+                    </Border>
+
+                    <Border Grid.Row="2" HorizontalAlignment="Stretch" Background="White" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="10">
+                        <DataGrid Name="AccountsGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID" Binding="{Binding AccountId, Converter={StaticResource ZeroIdToEmptyStringConverter}}" Width="70"/>
+                                <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="140"/>
+                                <DataGridTextColumn Header="Role" Binding="{Binding Role}" Width="100"/>
+                                <DataGridTextColumn Header="Full Name" Binding="{Binding FullName}" Width="170"/>
+                                <DataGridTextColumn Header="Created (UTC)" Binding="{Binding CreatedAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="150"/>
+                                <DataGridTextColumn Header="Latest activity" Binding="{Binding LatestActivityDisplay}" Width="*"/>
+                                <DataGridCheckBoxColumn Header="Is Active" Binding="{Binding IsActive}" Width="90"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <Button Grid.Row="3" Content="Close" Style="{StaticResource SecondaryToolbarButton}" HorizontalAlignment="Right" MinWidth="100" Margin="0,12,0,0" Click="CloseButton_OnClick"/>
+    </Grid>
+</Window>

@@ -1,0 +1,33 @@
+<Window x:Class="HSMS.Desktop.PortalLandingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="HSMS — Staff portal"
+        Height="420"
+        Width="460"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Background="{StaticResource BrushSurface}">
+    <Grid>
+        <Border Background="{StaticResource BrushCard}" CornerRadius="12"
+                BorderBrush="{StaticResource BrushBorder}" BorderThickness="1"
+                Margin="24" Padding="32,28" VerticalAlignment="Center">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="18" ShadowDepth="2" Opacity="0.12"/>
+            </Border.Effect>
+            <StackPanel>
+                <TextBlock Text="Hospital Sterilization Management System" FontSize="13" Foreground="{StaticResource BrushMuted}"/>
+                <TextBlock Text="Staff portal" FontSize="26" FontWeight="SemiBold" Foreground="{StaticResource BrushPrimary}" Margin="0,6,0,0"/>
+                <TextBlock Text="Sign in with an existing account, or create a new staff profile."
+                           TextWrapping="Wrap" Foreground="{StaticResource BrushMuted}" FontSize="13" Margin="0,12,0,0" LineHeight="18"/>
+
+                <Button Name="SignInButton" Content="Sign in" Style="{StaticResource PrimaryButton}" Margin="0,24,0,10" HorizontalAlignment="Stretch" MinHeight="42"/>
+
+                <Button Name="CreateAccountButton" Content="Create account" Style="{StaticResource SecondaryToolbarButton}" HorizontalAlignment="Stretch" MinHeight="42"/>
+
+                <TextBlock Name="RegistrationDisabledText"
+                           Text="Self-registration is disabled. Ask an administrator for an account."
+                           TextWrapping="Wrap" Foreground="{StaticResource BrushMuted}" FontSize="12" Margin="0,14,0,0" Visibility="Collapsed"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

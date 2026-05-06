@@ -1,0 +1,937 @@
+<Window x:Class="HSMS.Desktop.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:conv="clr-namespace:HSMS.Desktop.Converters"
+        xmlns:models="clr-namespace:HSMS.Desktop.Models"
+        xmlns:bi="clr-namespace:HSMS.Desktop.Controls"
+        mc:Ignorable="d"
+        Title="HSMS"
+        Height="780"
+        Width="1280"
+        MinWidth="1100"
+        MinHeight="640"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BrushSurface}"
+        FontFamily="Segoe UI">
+    <Window.Resources>
+        <conv:StoredUtcDateTimeConverter x:Key="StoredUtcToDeploymentDateTime"/>
+        
+        <!-- Force readable tooltips even if app theme overrides defaults. -->
+        <Style TargetType="{x:Type ToolTip}">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ToolTip}">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter RecognizesAccessKey="True"
+                                              TextElement.Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="AutoOpenCellComboStyle" TargetType="ComboBox">
+            <Setter Property="IsDropDownOpen" Value="True"/>
+        </Style>
+        <Style x:Key="BiLogSheetColumnHeader" TargetType="DataGridColumnHeader">
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="3,3"/>
+            <Setter Property="FontSize" Value="9"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <!-- Row virtualization makes ComboBox/DatePicker popups mis-align in DataGrid cells; BI sheet is bounded (~500 rows). -->
+        <Style x:Key="BiLogDataGrid" TargetType="DataGrid">
+            <Setter Property="EnableRowVirtualization" Value="False"/>
+            <Setter Property="VirtualizingPanel.IsVirtualizingWhenGrouping" Value="False"/>
+        </Style>
+
+        <!-- BI log: time | initials merged cells -->
+        <Style x:Key="BiLogTimeInitialsCellBorder" TargetType="Border">
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="CornerRadius" Value="5"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#DCE4EE"/>
+            <Setter Property="Background" Value="#FAFBFD"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Style.Triggers>
+                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                    <Setter Property="BorderBrush" Value="#3B82F6"/>
+                    <Setter Property="Background" Value="#EEF6FF"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="BiLogMaskedTimeChrome" TargetType="{x:Type bi:BiMasked24hTimeTextBox}">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Style.Triggers>
+                <Trigger Property="IsKeyboardFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#2563EB"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                    <Setter Property="Background" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="BiLogInitialsInCellChrome" TargetType="TextBox">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontFamily" Value="Segoe UI Semibold, Segoe UI"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="2,2"/>
+            <Setter Property="BorderBrush" Value="#C5D2E5"/>
+            <Setter Property="Background" Value="#F8FAFC"/>
+            <Style.Triggers>
+                <Trigger Property="IsKeyboardFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#2563EB"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                    <Setter Property="Background" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="{StaticResource BrushPrimary}" Padding="20,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Hospital Sterilization Management System" Foreground="#E8F4FC" FontSize="13"/>
+                    <TextBlock Name="HeaderTitleText" Text="Register load" Foreground="White" FontSize="22" FontWeight="SemiBold" Margin="0,2,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Name="AccountLabel" VerticalAlignment="Center" Foreground="White" FontSize="13" Margin="0,0,12,0"/>
+                    <Button Name="ProfileButton" Content="Profile" Style="{StaticResource GhostHeaderButton}" Click="ProfileButton_OnClick" Margin="0,0,8,0"/>
+                    <Button Name="LogoutButton" Content="Log out" Style="{StaticResource GhostHeaderButton}" Click="LogoutButton_OnClick"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="20">
+            <Grid.ColumnDefinitions>
+                <!-- Sidebar stays readable but doesn't steal table space on smaller screens. -->
+                <ColumnDefinition x:Name="NavMenuColumnDefinition" Width="220" MinWidth="200" MaxWidth="260"/>
+                <ColumnDefinition x:Name="NavMenuGapColumnDefinition" Width="12"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Name="NavMenuBorder" Grid.Column="0" Background="{StaticResource BrushCard}" CornerRadius="10" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" Padding="8">
+                <StackPanel>
+                    <Button Name="NavCollapseButton" Click="NavCollapseButton_OnClick" Style="{StaticResource SecondaryToolbarButton}"
+                            HorizontalAlignment="Stretch" Margin="4,4,4,8" Padding="8,6" FontSize="12"
+                            ToolTip="Hide the sidebar so tables and forms use the full width.">
+                        <TextBlock TextWrapping="Wrap" TextAlignment="Center" Text="⟨  Hide menu"/>
+                    </Button>
+                    <TextBlock Text="Menu" Foreground="{StaticResource BrushMuted}" FontSize="11" Margin="12,0,12,4" FontWeight="SemiBold"/>
+                    <Button Name="HomeButton" Content="  Home" Style="{StaticResource NavButton}" Click="HomeButton_OnClick" Margin="0,0,0,4"/>
+                    <Button Name="RegisterLoadButton" Content="  Register Load" Style="{StaticResource NavButtonActive}" Click="CyclesButton_OnClick" Margin="0,0,0,4"/>
+                    <Button Name="InstrumentsCheckButton" Content="  Instruments Check" Style="{StaticResource NavButton}" Click="NavPlaceholder_OnClick" Tag="Instruments Check" Margin="0,0,0,4"/>
+                    <Button Name="LoadRecordsButton" Content="  Load Records" Style="{StaticResource NavButton}" Click="LoadRecordsButton_OnClick" Margin="0,0,0,4"/>
+                    <Button Name="BiLogSheetsButton" Content="  BI Log Sheets" Style="{StaticResource NavButton}" Click="BiLogSheetsButton_OnClick" Margin="0,0,0,4"/>
+                    <Button Name="MachinesButton" Content="  Machines" Style="{StaticResource NavButton}" Click="NavPlaceholder_OnClick" Tag="Machines" Margin="0,0,0,4"/>
+                    <Button Name="InventoryButton" Content="  Inventory" Style="{StaticResource NavButton}" Click="NavPlaceholder_OnClick" Tag="Inventory" Margin="0,0,0,4"/>
+                    <Button Name="ChecklistButton" Content="  Checklist" Style="{StaticResource NavButton}" Click="NavPlaceholder_OnClick" Tag="Checklist" Margin="0,0,0,4"/>
+                    <Separator Name="AdminPanelSeparator" Margin="8,16"/>
+                    <Button Name="AdminPanelButton" Content="  Admin Panel" Style="{StaticResource NavButton}" Click="AdminPanelButton_OnClick" Margin="0,0,0,4"/>
+                    <TextBlock TextWrapping="Wrap" Foreground="{StaticResource BrushMuted}" FontSize="12" Margin="12,0" LineHeight="18"
+                               Text="Quick mode ON: Enter moves forward. Cycle No + Enter loads. Ctrl+S save. F5 refresh. F9 print."/>
+                </StackPanel>
+            </Border>
+
+            <Border Name="MainContentBorder" Grid.Column="2" Background="{StaticResource BrushCard}" CornerRadius="10" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" Padding="24">
+                <Grid>
+                    <ScrollViewer Name="MainContentScrollViewer" VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  CanContentScroll="False"
+                                  PanningMode="VerticalOnly">
+                    <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="16"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="10"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="10"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="10"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="16"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0">
+                        <TextBlock Name="RegisterLoadTitle" Text="Enter Sterilization Record" FontSize="16" FontWeight="SemiBold" Foreground="#212529"/>
+                        <TextBlock Name="LoadRecordsTitle" Text="Load records" FontSize="16" FontWeight="SemiBold" Foreground="#212529" Visibility="Collapsed"/>
+                        <TextBlock Name="HomeDashboardTitle" Text="Home" FontSize="16" FontWeight="SemiBold" Foreground="#212529" Visibility="Collapsed"/>
+                    </Grid>
+
+                    <!-- Home dashboard (summary + shortcuts; F5 refreshes while this view is visible) -->
+                    <Grid Name="HomeView" Grid.Row="2" Grid.RowSpan="9" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="14"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="14"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="14"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="8"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" Background="#F8FAFD" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="10" Padding="16,14">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Image Grid.Column="0" Height="48" Stretch="Uniform" StretchDirection="DownOnly"
+                                       Source="pack://application:,,,/logo.png" SnapsToDevicePixels="True" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                    <TextBlock Name="HomeWelcomeLine" FontSize="20" FontWeight="SemiBold" Foreground="#1a1a2e" TextWrapping="Wrap"/>
+                                    <TextBlock Text="Hospital Sterilization Management System" FontSize="13" Foreground="{StaticResource BrushMuted}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                    <TextBlock Name="HomeDeploymentClockLine" FontSize="12" Foreground="{StaticResource BrushMuted}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <StackPanel Grid.Row="2">
+                            <TextBlock Style="{StaticResource CaptionLabel}" Text="Quick actions" Margin="0,0,0,6"/>
+                            <WrapPanel Orientation="Horizontal">
+                                <Button Name="HomeGoRegisterButton" Content="Register load" Style="{StaticResource PrimaryButton}" MinWidth="150" Margin="0,0,10,8" Padding="16,10" Click="HomeGoRegisterButton_OnClick"/>
+                                <Button Name="HomeGoLoadRecordsButton" Content="Load records" Style="{StaticResource SecondaryToolbarButton}" MinWidth="140" Margin="0,0,10,8" Click="HomeGoLoadRecordsButton_OnClick"/>
+                                <Button Name="HomeGoBiLogButton" Content="BI Log Sheets" Style="{StaticResource SecondaryToolbarButton}" MinWidth="140" Margin="0,0,10,8" Click="HomeGoBiLogButton_OnClick"/>
+                            </WrapPanel>
+                        </StackPanel>
+
+                        <Grid Grid.Row="4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Background="White" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="14,12">
+                                <StackPanel>
+                                    <TextBlock Text="Cycles listed" Style="{StaticResource CaptionLabel}"/>
+                                    <TextBlock Name="HomeStatTotalValue" FontSize="26" FontWeight="SemiBold" Foreground="{StaticResource BrushPrimary}"/>
+                                    <TextBlock Name="HomeStatTotalCaption" FontSize="11" Foreground="{StaticResource BrushMuted}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="2" Background="White" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="14,12">
+                                <StackPanel>
+                                    <TextBlock Text="Draft (in list)" Style="{StaticResource CaptionLabel}"/>
+                                    <TextBlock Name="HomeStatDraftValue" FontSize="26" FontWeight="SemiBold" Foreground="#856404"/>
+                                    <TextBlock FontSize="11" Foreground="{StaticResource BrushMuted}" TextWrapping="Wrap" Margin="0,4,0,0"
+                                               Text="Among the most recent cycles returned for the summary."/>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="4" Background="White" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="14,12">
+                                <StackPanel>
+                                    <TextBlock Text="Completed today" Style="{StaticResource CaptionLabel}"/>
+                                    <TextBlock Name="HomeStatCompletedTodayValue" FontSize="26" FontWeight="SemiBold" Foreground="{StaticResource BrushSuccess}"/>
+                                    <TextBlock Name="HomeStatCompletedTodayCaption" FontSize="11" Foreground="{StaticResource BrushMuted}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <TextBlock Grid.Row="6" Style="{StaticResource CaptionLabel}" Text="Recent cycles (newest first)" Margin="0,0,0,0"/>
+
+                        <DataGrid Grid.Row="8" Name="HomeRecentCyclesGrid"
+                                  AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                                  MinHeight="220" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                                  BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" Background="White"
+                                  HeadersVisibility="Column" GridLinesVisibility="Horizontal">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Cycle No" Binding="{Binding CycleNo}" Width="140"/>
+                                <DataGridTextColumn Header="Sterilizer" Binding="{Binding SterilizerNo}" Width="120"/>
+                                <DataGridTextColumn Header="Status" Binding="{Binding CycleStatus}" Width="110"/>
+                                <DataGridTextColumn Header="Load time" Width="170"
+                                                    Binding="{Binding CycleDateTimeUtc, Converter={StaticResource StoredUtcToDeploymentDateTime}}"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+
+                    <Grid Name="RegisterLoadView" Grid.Row="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="24"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0">
+                            <TextBlock Style="{StaticResource CaptionLabel}" Text="Sterilization type (temperature)"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <RadioButton Name="SterTempHighRadio" GroupName="SterTempMode" Content="High temperature" IsChecked="True"
+                                             Margin="0,0,20,0" VerticalAlignment="Center"
+                                             Checked="SterTempHighRadio_OnChecked"/>
+                                <RadioButton Name="SterTempLowRadio" GroupName="SterTempMode" Content="Low temperature" VerticalAlignment="Center"
+                                             Checked="SterTempLowRadio_OnChecked"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="2">
+                            <TextBlock Style="{StaticResource CaptionLabel}" Text="Date"/>
+                            <DatePicker Name="CycleEntryDatePicker" SelectedDateFormat="Short" Margin="0,6,0,0"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="0">
+                            <TextBlock Style="{StaticResource CaptionLabel}" Text="Sterilizer No."/>
+                            <ComboBox Name="SterilizerCombo" DisplayMemberPath="SterilizerNo" SelectedValuePath="SterilizerId" IsEditable="False" Margin="0,6,0,0"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="2">
+                            <TextBlock Style="{StaticResource CaptionLabel}" Text="Operator"/>
+                            <TextBox Name="OperatorTextBox" IsReadOnly="True" Margin="0,6,0,0"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="4" Grid.Column="0">
+                            <TextBlock Style="{StaticResource CaptionLabel}" Text="Cycle"/>
+                            <ComboBox Name="CycleProgramCombo" IsEditable="False" Margin="0,6,0,0"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="4" Grid.Column="2">
+                            <TextBlock Style="{StaticResource CaptionLabel}" Text="Cycle No."/>
+                            <TextBox Name="CycleNoTextBox" Margin="0,6,0,0" IsReadOnly="True"
+                                     IsReadOnlyCaretVisible="False"
+                                     IsTabStop="False"
+                                     ContextMenu="{x:Null}"
+                                     ToolTipService.ToolTip="Auto-assigned (00001, 00002, ...)."/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="6" Grid.Column="0">
+                            <TextBlock Style="{StaticResource CaptionLabel}" Text="Biological indicator"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <RadioButton Name="BiIndicatorYesRadio" GroupName="BiIndicator" Content="Yes" IsChecked="True" Margin="0,0,20,0"/>
+                                <RadioButton Name="BiIndicatorNoRadio" GroupName="BiIndicator" Content="No"/>
+                            </StackPanel>
+
+                            <StackPanel Name="ImplantsOptionsPanel" Margin="0,10,0,0">
+                                <TextBlock Style="{StaticResource CaptionLabel}" Text="Implants"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                    <RadioButton Name="ImplantsYesRadio" GroupName="ImplantsOptions" Content="Yes" Margin="0,0,20,0"/>
+                                    <RadioButton Name="ImplantsNoRadio" GroupName="ImplantsOptions" Content="No" IsChecked="True"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <StackPanel Name="BiLotPanel" Margin="0,10,0,0">
+                                <TextBlock Style="{StaticResource CaptionLabel}" Text="BI Lot#"/>
+                                <TextBox Name="BiLotNoTextBox"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Grid.Row="6" Grid.Column="2" VerticalAlignment="Top">
+                            <TextBlock Style="{StaticResource CaptionLabel}" Text="Temperature °C"/>
+                            <TextBox Name="TemperatureTextBox" Margin="0,6,0,0"/>
+
+                            <!-- High-temp quick picks: common autoclave presets -->
+                            <UniformGrid Name="HighTempPresetPanel" Rows="1" Columns="2" Margin="0,8,0,0">
+                                <Button Name="Preset134Button" Content="134°C" MinHeight="30" Margin="0,0,8,0"
+                                        ToolTip="Set temperature 134°C and exposure 4 minutes"
+                                        Click="Preset134Button_OnClick"/>
+                                <Button Name="Preset121Button" Content="121°C" MinHeight="30"
+                                        ToolTip="Set temperature 121°C and exposure 20 minutes"
+                                        Click="Preset121Button_OnClick"/>
+                            </UniformGrid>
+
+                            <TextBlock Style="{StaticResource CaptionLabel}" Text="Exposure (min)" Margin="0,10,0,0"/>
+                            <TextBox Name="ExposureMinutesTextBox" Margin="0,6,0,0"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Name="RegisterLoadQuickHelp" Grid.Row="3" Background="#EEF6FF" BorderBrush="#C9E1FF" BorderThickness="1" CornerRadius="6" Padding="10,6">
+                        <TextBlock Foreground="#0F4C81" FontSize="12" FontWeight="SemiBold"
+                                   Text="Quick entry: Enter = next field/cell • Cycle No + Enter = load/new • Ctrl+S = save • F5 = refresh • F9 = print"/>
+                    </Border>
+
+                    <Grid Name="RegisterLoadMetricsView" Grid.Row="4">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Style="{StaticResource CaptionLabel}" Text="BI result (when indicator is Yes)"/>
+                        <ComboBox Grid.Row="1" Name="BiResultCombo" IsEditable="False" Margin="0,6,0,0">
+                            <ComboBoxItem Content="Pending" IsSelected="True"/>
+                            <ComboBoxItem Content="Pass"/>
+                            <ComboBoxItem Content="Fail"/>
+                            <ComboBoxItem Content="N/A"/>
+                        </ComboBox>
+                    </Grid>
+
+                    <Grid Name="RegisterLoadStatusDoctorNotesView" Grid.Row="6">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="2*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource CaptionLabel}" Text="Cycle status"/>
+                        <TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource CaptionLabel}" Text="Doctor/Department"/>
+                        <TextBlock Grid.Row="0" Grid.Column="4" Style="{StaticResource CaptionLabel}" Text="Notes"/>
+                        <ComboBox Grid.Row="1" Grid.Column="0" Name="CycleStatusCombo" IsEditable="False">
+                            <ComboBoxItem Content="Draft" IsSelected="True"/>
+                            <ComboBoxItem Content="Completed"/>
+                            <ComboBoxItem Content="Voided"/>
+                        </ComboBox>
+                        <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Vertical">
+                            <ComboBox Name="DoctorRoomCombo"
+                                      ItemsSource="{Binding DoctorRoomOptions, RelativeSource={RelativeSource AncestorType=Window}}"
+                                      IsEditable="True"
+                                      IsTextSearchEnabled="True"
+                                      IsTextSearchCaseSensitive="False"
+                                      StaysOpenOnEdit="True"
+                                      ToolTipService.ToolTip="Doctor/Room (type to add new)"/>
+                            <ComboBox Name="DepartmentCombo"
+                                      Margin="0,6,0,0"
+                                      ItemsSource="{Binding DepartmentOptions, RelativeSource={RelativeSource AncestorType=Window}}"
+                                      IsEditable="True"
+                                      IsTextSearchEnabled="True"
+                                      IsTextSearchCaseSensitive="False"
+                                      StaysOpenOnEdit="True"
+                                      ToolTipService.ToolTip="Department (type to add new)"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="4" Orientation="Vertical">
+                            <TextBox Name="NotesTextBox"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Name="RegisterLoadItemInputView" Grid.Row="8" Margin="0,6,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource CaptionLabel}" Text="Item Description"/>
+                        <TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource CaptionLabel}" Text="Pcs"/>
+                        <TextBlock Grid.Row="0" Grid.Column="4" Style="{StaticResource CaptionLabel}" Text="Qty"/>
+
+                        <ComboBox Grid.Row="1" Grid.Column="0" Name="RegisterItemCombo"
+                                  ItemsSource="{Binding ItemDescriptionOptions, RelativeSource={RelativeSource AncestorType=Window}}"
+                                  IsEditable="True" IsTextSearchEnabled="True" IsTextSearchCaseSensitive="False" StaysOpenOnEdit="True"
+                                  Margin="0,6,0,0"
+                                  ToolTipService.ToolTip="Item description (type to add new)"/>
+                        <ComboBox Grid.Row="1" Grid.Column="2" Name="RegisterPcsCombo" Margin="0,6,0,0"
+                                  IsEditable="True" IsTextSearchEnabled="True" IsTextSearchCaseSensitive="False" StaysOpenOnEdit="True"
+                                  ToolTipService.ToolTip="Pcs (type or pick)"/>
+                        <ComboBox Grid.Row="1" Grid.Column="4" Name="RegisterQtyCombo" Margin="0,6,0,0"
+                                  IsEditable="True" IsTextSearchEnabled="True" IsTextSearchCaseSensitive="False" StaysOpenOnEdit="True"
+                                  ToolTipService.ToolTip="Qty (type or pick)"/>
+                    </Grid>
+
+                    <StackPanel Name="RegisterLoadButtonsView" Grid.Row="10" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,0">
+                        <Button Name="RefreshButton" Content="Refresh" Style="{StaticResource SecondaryToolbarButton}" MinWidth="120" Margin="0,0,10,0"/>
+                        <Button Name="PrintButton" Content="Print report" Style="{StaticResource SecondaryToolbarButton}" MinWidth="130" Margin="0,0,10,0"/>
+                        <Button Name="SaveButton" Content="Save record" Style="{StaticResource SuccessToolbarButton}" MinWidth="160"/>
+                    </StackPanel>
+
+                    <!-- Load Records view -->
+                    <Grid Name="LoadRecordsView" Grid.Row="2" Grid.RowSpan="9" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" Background="#F8FAFD" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="14"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Style="{StaticResource CaptionLabel}" Text="Search cycle no. (optional)"/>
+                                    <TextBox Name="LoadRecordsSearchBox"/>
+                                </StackPanel>
+
+                                <Button Grid.Column="2" Name="LoadRecordsRefreshButton" Content="Refresh" Style="{StaticResource PrimaryButton}" MinWidth="110" VerticalAlignment="Bottom"/>
+                            </Grid>
+                        </Border>
+
+                        <DataGrid Grid.Row="2" Name="LoadRecordsGrid"
+                                  AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                                  MinHeight="360" MaxHeight="620"
+                                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                                  BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" Background="White">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID" Binding="{Binding SterilizationId}" Width="70"/>
+                                <DataGridTextColumn Header="Cycle No" Binding="{Binding CycleNo}" Width="140"/>
+                                <DataGridTextColumn Header="Sterilizer" Binding="{Binding SterilizerNo}" Width="120"/>
+                                <DataGridTextColumn Header="Status" Binding="{Binding CycleStatus}" Width="110"/>
+                                <DataGridTextColumn Header="Load time" IsReadOnly="True" Binding="{Binding CycleDateTimeUtc, Converter={StaticResource StoredUtcToDeploymentDateTime}}" Width="170"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+
+                    <!-- BI Log Sheets view (printed as a unit: logo, title, filters, grid) -->
+                    <Grid Name="BiLogSheetsView" Grid.Row="2" Grid.RowSpan="9" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="10"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" Background="White" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1" Padding="0,0,0,8">
+                            <DockPanel LastChildFill="True">
+                                <Image DockPanel.Dock="Left" Height="44" Width="Auto" Stretch="Uniform" StretchDirection="DownOnly"
+                                       Margin="0,0,14,0" VerticalAlignment="Center"
+                                       Source="pack://application:,,,/logo.png"
+                                       SnapsToDevicePixels="True"/>
+                                <TextBlock Name="BiLogTitle" TextWrapping="Wrap" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Foreground="#1a1a2e"
+                                           Text="STEAM STERILIZER PERIODIC QUALITY ASSURANCE — BIOLOGICAL INDICATOR TEST RESULT"/>
+                            </DockPanel>
+                        </Border>
+
+                        <Border Grid.Row="2" Background="#F8FAFD" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="14"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="14"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="14"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="14"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Style="{StaticResource CaptionLabel}" Text="Type"/>
+                                    <ComboBox Name="BiTypeCombo" MinWidth="160" IsEditable="False"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Style="{StaticResource CaptionLabel}" Text="From"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                                        <DatePicker Name="BiFromDate" SelectedDateFormat="Short" Width="122"/>
+                                        <ComboBox Name="BiFromHourCombo" Width="56" Margin="8,0,0,0"
+                                                  ToolTip="Optional: hour filter (deployment time, 24-hour clock)."/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="4">
+                                    <TextBlock Style="{StaticResource CaptionLabel}" Text="To"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                                        <DatePicker Name="BiToDate" SelectedDateFormat="Short" Width="122"/>
+                                        <ComboBox Name="BiToHourCombo" Width="56" Margin="8,0,0,0"
+                                                  ToolTip="Optional: hour filter (deployment time, 24-hour clock)."/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="6">
+                                    <TextBlock Style="{StaticResource CaptionLabel}" Text="Search cycle no."/>
+                                    <TextBox Name="BiCycleSearchText" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="8" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                    <Button Name="BiGoButton" Content="Go" Style="{StaticResource SuccessToolbarButton}" MinWidth="70" Margin="0,0,8,0"/>
+                                    <Button Name="BiClearButton" Content="Clear" Style="{StaticResource SecondaryToolbarButton}" MinWidth="70"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="10" Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Right">
+                                    <Button Name="BiExportButton" Content="Export" Style="{StaticResource SecondaryToolbarButton}" MinWidth="80" Margin="0,0,8,0"/>
+                                    <Button Name="BiPrintButton" Content="Print" Style="{StaticResource SecondaryToolbarButton}" MinWidth="80"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <DataGrid Grid.Row="4" Name="BiLogGrid" Style="{StaticResource BiLogDataGrid}"
+                                  MinWidth="1200"
+                                  MinHeight="260"
+                                  VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Auto"
+                                  AutoGenerateColumns="False" IsReadOnly="False" CanUserAddRows="False"
+                                  FrozenColumnCount="2"
+                                  AlternationCount="2"
+                                  ColumnHeaderStyle="{StaticResource BiLogSheetColumnHeader}"
+                                  BeginningEdit="BiLogGrid_OnBeginningEdit"
+                                  PreparingCellForEdit="BiLogGrid_OnPreparingCellForEdit"
+                                  CellEditEnding="BiLogGrid_OnCellEditEnding"
+                                  PreviewMouseLeftButtonDown="BiLogGrid_OnPreviewMouseLeftButtonDown"
+                                  PreviewKeyDown="BiLogGrid_OnPreviewKeyDown"
+                                  FontSize="9" RowHeight="66"
+                                  GridLinesVisibility="Horizontal" HeadersVisibility="Column"
+                                  HorizontalGridLinesBrush="#E6EEF7"
+                                  VerticalGridLinesBrush="Transparent"
+                                  BorderBrush="#DCE4EE" BorderThickness="1" Background="White">
+                            <DataGrid.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                    <Setter Property="Padding" Value="4,1"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="#DBEAFE"/>
+                                            <Setter Property="BorderThickness" Value="1"/>
+                                            <Setter Property="BorderBrush" Value="#60A5FA"/>
+                                        </Trigger>
+                                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                            <Setter Property="Background" Value="#EFF6FF"/>
+                                            <Setter Property="BorderThickness" Value="1"/>
+                                            <Setter Property="BorderBrush" Value="#3B82F6"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.CellStyle>
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow">
+                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                    <Setter Property="Background" Value="White"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Setter Property="SnapsToDevicePixels" Value="True"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="AlternationIndex" Value="1">
+                                            <Setter Property="Background" Value="#FBFDFF"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="#DBEAFE"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Date" IsReadOnly="True" Width="74"
+                                                    Binding="{Binding CycleDateTimeUtc, Converter={StaticResource StoredUtcToDeploymentDateTime}, ConverterParameter=yyyy-MM-dd}"/>
+                                <DataGridTextColumn IsReadOnly="True" Width="104" Binding="{Binding SterilizerCycleNoDisplay}">
+                                    <DataGridTextColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="Sterilizer No. /&#x0a;Cycle No." TextAlignment="Center" TextWrapping="Wrap" FontSize="9"/>
+                                        </DataTemplate>
+                                    </DataGridTextColumn.HeaderTemplate>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="LOT NO" IsReadOnly="True" Width="48" Binding="{Binding BiLotNo}"/>
+                                <DataGridCheckBoxColumn Header="Daily" Width="40" IsThreeState="True"
+                                                        Binding="{Binding BiDaily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                <DataGridCheckBoxColumn Width="48" IsReadOnly="True" Binding="{Binding Implants}">
+                                    <DataGridCheckBoxColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="Contain&#x0a;implant" TextAlignment="Center" TextWrapping="Wrap" FontSize="9"/>
+                                        </DataTemplate>
+                                    </DataGridCheckBoxColumn.HeaderTemplate>
+                                </DataGridCheckBoxColumn>
+                                <DataGridTextColumn IsReadOnly="True" Width="40" Binding="{Binding LoadQty}">
+                                    <DataGridTextColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="Qty of items&#x0a;in the load" TextAlignment="Center" TextWrapping="Wrap" FontSize="9"/>
+                                        </DataTemplate>
+                                    </DataGridTextColumn.HeaderTemplate>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn IsReadOnly="True" Width="78" Binding="{Binding ExposureTimeTempDisplay}">
+                                    <DataGridTextColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="Exposure time&#x0a;/ Temp" TextAlignment="Center" TextWrapping="Wrap" FontSize="9"/>
+                                        </DataTemplate>
+                                    </DataGridTextColumn.HeaderTemplate>
+                                </DataGridTextColumn>
+                                <DataGridTemplateColumn Width="64" MinWidth="60">
+                                    <DataGridTemplateColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="Incubator temp&#x0a;(e.g. 60°C +12)" TextAlignment="Center" TextWrapping="Wrap" FontSize="8"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <CheckBox IsChecked="{Binding BiIncubatorChecked}" VerticalAlignment="Center" Margin="0,0,4,0"
+                                                          ToolTipService.ToolTip="Incubator checked"/>
+                                                <TextBlock Text="{Binding BiIncubatorTemp}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <CheckBox IsChecked="{Binding BiIncubatorChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          VerticalAlignment="Center" Margin="0,0,6,0"
+                                                          ToolTipService.ToolTip="Incubator checked"/>
+                                                <TextBox Text="{Binding BiIncubatorTemp, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         Width="40" VerticalContentAlignment="Center"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellEditingTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn x:Name="BiLogTimeInMergedColumn" Width="150" MinWidth="140">
+                                    <DataGridTemplateColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <TextBlock Text="Time In / Initials" FontWeight="SemiBold" FontSize="9" TextAlignment="Center" TextWrapping="Wrap"/>
+                                                <TextBlock Text="HH:mm · initials" FontSize="8" TextAlignment="Center" Opacity="0.82" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource BiLogTimeInitialsCellBorder}" VerticalAlignment="Stretch" Margin="2,4"
+                                                    ToolTipService.ToolTip="Time uses the cycle date (deployment zone). Staff initials on removal.">
+                                                <Grid VerticalAlignment="Center" MinHeight="28">
+                                                    <TextBlock Grid.Column="0"
+                                                               FontFamily="Cascadia Mono, Consolas"
+                                                               FontSize="11"
+                                                               VerticalAlignment="Center"
+                                                               HorizontalAlignment="Stretch"
+                                                               TextAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               Text="{Binding BiTimeInDisplayTime}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="#0F172A"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding BiTimeInTimeText}" Value="">
+                                                                        <Setter Property="Foreground" Value="#94A3B8"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource BiLogTimeInitialsCellBorder}" VerticalAlignment="Stretch" Margin="2,4"
+                                                    KeyboardNavigation.TabNavigation="Continue">
+                                                <Grid VerticalAlignment="Stretch" MinHeight="28">
+                                                    <bi:BiMasked24hTimeTextBox Grid.Column="0"
+                                                                               Style="{StaticResource BiLogMaskedTimeChrome}"
+                                                                               ValueHm="{Binding BiTimeInTimeText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                                               IsTimeOut="False"
+                                                                               ToolTipService.ToolTip="Digits only (e.g. 1830→18:30). Enter → next row."/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellEditingTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn x:Name="BiLogTimeOutMergedColumn" Width="170" MinWidth="160">
+                                    <DataGridTemplateColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <TextBlock Text="Time Out / Initials" FontWeight="SemiBold" FontSize="9" TextAlignment="Center" TextWrapping="Wrap"/>
+                                                <TextBlock Text="HH:mm · initials" FontSize="8" TextAlignment="Center" Opacity="0.82" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource BiLogTimeInitialsCellBorder}" VerticalAlignment="Stretch" Margin="2,2"
+                                                    ToolTipService.ToolTip="Time out uses the cycle date (deployment zone).">
+                                                <Grid VerticalAlignment="Center" MinHeight="28">
+                                                    <TextBlock Grid.Column="0"
+                                                               FontFamily="Cascadia Mono, Consolas"
+                                                               FontSize="11"
+                                                               VerticalAlignment="Center"
+                                                               HorizontalAlignment="Stretch"
+                                                               TextAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               Text="{Binding BiTimeOutDisplayTime}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="#0F172A"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding BiTimeOutTimeText}" Value="">
+                                                                        <Setter Property="Foreground" Value="#94A3B8"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource BiLogTimeInitialsCellBorder}" VerticalAlignment="Stretch" Margin="2,2"
+                                                    KeyboardNavigation.TabNavigation="Continue">
+                                                <Grid VerticalAlignment="Stretch" MinHeight="28">
+                                                    <bi:BiMasked24hTimeTextBox Grid.Column="0"
+                                                                               Style="{StaticResource BiLogMaskedTimeChrome}"
+                                                                               VerticalAlignment="Stretch"
+                                                                               MinHeight="32" Height="32"
+                                                                               ValueHm="{Binding BiTimeOutTimeText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                                               IsTimeOut="True"
+                                                                               TabIndex="0"
+                                                                               ToolTipService.ToolTip="Digits only. Enter → next row."/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellEditingTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn x:Name="BiLogProc24MinColumn" Header="" Width="56" MinWidth="52">
+                                    <DataGridTemplateColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <TextBlock Text="BI processed" FontWeight="SemiBold" FontSize="8" TextAlignment="Center" TextWrapping="Wrap"/>
+                                                <TextBlock Text="24 MIN" FontSize="8" TextAlignment="Center" Margin="0,1,0,0"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding BiProcessed24mDisplay}"
+                                                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                       FontSize="18" FontWeight="ExtraBold"
+                                                       Foreground="#0B1220"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                        <DataTemplate>
+                                            <bi:BiPlusMinusSignToggle VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                                     Sign="{Binding BiProcessedResult24m, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellEditingTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn x:Name="BiLogProc24HrColumn" Header="" Width="56" MinWidth="52">
+                                    <DataGridTemplateColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <TextBlock Text="BI processed" FontWeight="SemiBold" FontSize="8" TextAlignment="Center" TextWrapping="Wrap"/>
+                                                <TextBlock Text="24 HRS" FontSize="8" TextAlignment="Center" Margin="0,1,0,0"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding BiProcessed24hDisplay}"
+                                                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                       FontSize="18" FontWeight="ExtraBold"
+                                                       Foreground="#0B1220"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                        <DataTemplate>
+                                            <bi:BiPlusMinusSignToggle VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                                     Sign="{Binding BiProcessedResult24h, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellEditingTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn x:Name="BiLogCtrl24MinColumn" Header="" Width="56" MinWidth="52">
+                                    <DataGridTemplateColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <TextBlock Text="BI control" FontWeight="SemiBold" FontSize="8" TextAlignment="Center" TextWrapping="Wrap"/>
+                                                <TextBlock Text="24 MIN" FontSize="8" TextAlignment="Center" Margin="0,1,0,0"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding BiControl24mDisplay}"
+                                                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                       FontSize="18" FontWeight="ExtraBold"
+                                                       Foreground="#0B1220"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                        <DataTemplate>
+                                            <bi:BiPlusMinusSignToggle VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                                     Sign="{Binding BiControlResult24m, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellEditingTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn x:Name="BiLogCtrl24HrColumn" Header="" Width="56" MinWidth="52">
+                                    <DataGridTemplateColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <TextBlock Text="BI control" FontWeight="SemiBold" FontSize="8" TextAlignment="Center" TextWrapping="Wrap"/>
+                                                <TextBlock Text="24 HRS" FontSize="8" TextAlignment="Center" Margin="0,1,0,0"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding BiControl24hDisplay}"
+                                                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                       FontSize="18" FontWeight="ExtraBold"
+                                                       Foreground="#0B1220"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                        <DataTemplate>
+                                            <bi:BiPlusMinusSignToggle VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                                     Sign="{Binding BiControlResult24h, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellEditingTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Operator" IsReadOnly="True" Width="58" Binding="{Binding OperatorName}"/>
+                                <DataGridTextColumn Width="180" MinWidth="160"
+                                                    Binding="{Binding Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                    <DataGridTextColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="Comments /&#x0a;result" TextAlignment="Center" TextWrapping="Wrap" FontSize="9"/>
+                                        </DataTemplate>
+                                    </DataGridTextColumn.HeaderTemplate>
+                                </DataGridTextColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Grid>
+                </ScrollViewer>
+                    <Button Name="NavExpandButton" Click="NavExpandButton_OnClick" Visibility="Collapsed"
+                            HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4,10,0,0" Panel.ZIndex="2"
+                            Padding="10,12" FontSize="16" FontWeight="SemiBold" Content="⟩"
+                            ToolTip="Show the sidebar menu again." Cursor="Hand"
+                            Style="{StaticResource SecondaryToolbarButton}"/>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="2" Background="#E9ECEF" Padding="14,8" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,1,0,0">
+            <TextBlock Name="StatusText" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Foreground="#212529" FontSize="13" Text="Ready"/>
+        </Border>
+    </Grid>
+</Window>

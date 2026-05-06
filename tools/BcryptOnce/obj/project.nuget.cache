@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "GrVCv3nqt4c=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\adiza\\HSMS\\tools\\BcryptOnce\\BcryptOnce.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\adiza\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}

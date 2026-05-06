@@ -1,0 +1,62 @@
+<Window x:Class="HSMS.Desktop.CreateAccountWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="HSMS — Create account"
+        Height="640"
+        Width="500"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Background="{StaticResource BrushSurface}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,16">
+        <Border Background="{StaticResource BrushCard}" CornerRadius="12"
+                BorderBrush="{StaticResource BrushBorder}" BorderThickness="1"
+                Width="420" Padding="24,22" HorizontalAlignment="Center">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.1"/>
+            </Border.Effect>
+            <StackPanel>
+                <TextBlock Text="Create account" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource BrushPrimary}"/>
+                <TextBlock Text="New accounts use standard user access. An administrator can change roles if needed."
+                           TextWrapping="Wrap" Foreground="{StaticResource BrushMuted}" FontSize="12" Margin="0,8,0,0"/>
+
+                <TextBlock Style="{StaticResource CaptionLabel}" Text="Username *" Margin="0,16,0,0"/>
+                <TextBox Name="UsernameBox"/>
+
+                <TextBlock Style="{StaticResource CaptionLabel}" Text="Password * (min 8 characters)" Margin="0,10,0,0"/>
+                <PasswordBox Name="PasswordBox"/>
+
+                <TextBlock Style="{StaticResource CaptionLabel}" Text="Confirm password *" Margin="0,10,0,0"/>
+                <PasswordBox Name="ConfirmPasswordBox"/>
+
+                <TextBlock Style="{StaticResource CaptionLabel}" Text="First name *" Margin="0,10,0,0"/>
+                <TextBox Name="FirstNameBox"/>
+
+                <TextBlock Style="{StaticResource CaptionLabel}" Text="Last name *" Margin="0,10,0,0"/>
+                <TextBox Name="LastNameBox"/>
+
+                <TextBlock Style="{StaticResource CaptionLabel}" Text="Email *" Margin="0,10,0,0"/>
+                <TextBox Name="EmailBox"/>
+
+                <TextBlock Style="{StaticResource CaptionLabel}" Text="Phone" Margin="0,10,0,0"/>
+                <TextBox Name="PhoneBox"/>
+
+                <TextBlock Style="{StaticResource CaptionLabel}" Text="Department" Margin="0,10,0,0"/>
+                <TextBox Name="DepartmentBox"/>
+
+                <TextBlock Style="{StaticResource CaptionLabel}" Text="Job title" Margin="0,10,0,0"/>
+                <TextBox Name="JobTitleBox"/>
+
+                <TextBlock Style="{StaticResource CaptionLabel}" Text="Employee ID" Margin="0,10,0,0"/>
+                <TextBox Name="EmployeeIdBox"/>
+
+                <TextBlock Name="ErrorText" Margin="0,14,0,0" Foreground="{StaticResource BrushDanger}"
+                           TextWrapping="Wrap" Visibility="Collapsed" FontSize="13"/>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+                    <Button Name="BackButton" Content="Back" Style="{StaticResource SecondaryToolbarButton}" MinWidth="90" Margin="0,0,10,0"/>
+                    <Button Name="RegisterButton" Content="Create account" Style="{StaticResource PrimaryButton}" MinWidth="130"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </ScrollViewer>
+</Window>

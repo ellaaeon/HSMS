@@ -1,0 +1,17 @@
+C:\Users\adiza\HSMS\tools\BcryptOnce\bin\Debug\net8.0\BcryptOnce.exe
+C:\Users\adiza\HSMS\tools\BcryptOnce\bin\Debug\net8.0\BcryptOnce.deps.json
+C:\Users\adiza\HSMS\tools\BcryptOnce\bin\Debug\net8.0\BcryptOnce.runtimeconfig.json
+C:\Users\adiza\HSMS\tools\BcryptOnce\bin\Debug\net8.0\BcryptOnce.dll
+C:\Users\adiza\HSMS\tools\BcryptOnce\bin\Debug\net8.0\BcryptOnce.pdb
+C:\Users\adiza\HSMS\tools\BcryptOnce\bin\Debug\net8.0\BCrypt.Net-Next.dll
+C:\Users\adiza\HSMS\tools\BcryptOnce\obj\Debug\net8.0\BcryptOnce.csproj.AssemblyReference.cache
+C:\Users\adiza\HSMS\tools\BcryptOnce\obj\Debug\net8.0\BcryptOnce.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\adiza\HSMS\tools\BcryptOnce\obj\Debug\net8.0\BcryptOnce.AssemblyInfoInputs.cache
+C:\Users\adiza\HSMS\tools\BcryptOnce\obj\Debug\net8.0\BcryptOnce.AssemblyInfo.cs
+C:\Users\adiza\HSMS\tools\BcryptOnce\obj\Debug\net8.0\BcryptOnce.csproj.CoreCompileInputs.cache
+C:\Users\adiza\HSMS\tools\BcryptOnce\obj\Debug\net8.0\BcryptOnce.csproj.Up2Date
+C:\Users\adiza\HSMS\tools\BcryptOnce\obj\Debug\net8.0\BcryptOnce.dll
+C:\Users\adiza\HSMS\tools\BcryptOnce\obj\Debug\net8.0\refint\BcryptOnce.dll
+C:\Users\adiza\HSMS\tools\BcryptOnce\obj\Debug\net8.0\BcryptOnce.pdb
+C:\Users\adiza\HSMS\tools\BcryptOnce\obj\Debug\net8.0\BcryptOnce.genruntimeconfig.cache
+C:\Users\adiza\HSMS\tools\BcryptOnce\obj\Debug\net8.0\ref\BcryptOnce.dll

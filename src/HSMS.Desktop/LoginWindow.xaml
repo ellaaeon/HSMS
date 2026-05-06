@@ -1,0 +1,116 @@
+<Window x:Class="HSMS.Desktop.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="HSMS — Sign in"
+        Height="560"
+        MinHeight="520"
+        Width="480"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Background="{StaticResource BrushSurface}">
+    <Grid>
+        <!-- Scroll so validation / server errors are never clipped below a fixed window height. -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalAlignment="Stretch"
+                      Padding="24,20">
+            <Border Background="{StaticResource BrushCard}" CornerRadius="12"
+                    BorderBrush="{StaticResource BrushBorder}" BorderThickness="1"
+                    HorizontalAlignment="Center"
+                    Width="400"
+                    Padding="28,28">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="18" ShadowDepth="2" Opacity="0.12"/>
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="18"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="10"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="14"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="8"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="10"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="14"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0">
+                        <TextBlock Text="Hospital Sterilization Management System" FontSize="13" Foreground="{StaticResource BrushMuted}"/>
+                        <TextBlock Text="Sign in" FontSize="26" FontWeight="SemiBold" Foreground="{StaticResource BrushPrimary}" Margin="0,4,0,0"/>
+                        <TextBlock Name="SignInSubtitleText"
+                                   FontSize="13"
+                                   Foreground="{StaticResource BrushMuted}"
+                                   TextWrapping="Wrap"
+                                   LineHeight="18"
+                                   Margin="0,10,0,0"/>
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="2" Style="{StaticResource CaptionLabel}" Text="Username"/>
+                    <TextBox Grid.Row="4" Name="UsernameBox"/>
+
+                    <TextBlock Grid.Row="6" Style="{StaticResource CaptionLabel}" Text="Password"/>
+                    <Grid Grid.Row="8">
+                        <PasswordBox x:Name="PasswordBox"/>
+                        <TextBox x:Name="PasswordPlainBox"
+                                 Visibility="Collapsed"
+                                 TextChanged="PasswordPlainBox_OnTextChanged"/>
+                    </Grid>
+
+                    <CheckBox Grid.Row="10"
+                              x:Name="ShowPasswordCheckBox"
+                              Content="Show password"
+                              FontSize="13"
+                              Foreground="{StaticResource BrushMuted}"
+                              Checked="ShowPasswordCheckBox_OnCheckedChanged"
+                              Unchecked="ShowPasswordCheckBox_OnCheckedChanged"/>
+
+                    <!-- Self-registration: keep above Sign in so it is not clipped on short viewports / high DPI. -->
+                    <Border Name="RegistrationFooter"
+                            Grid.Row="11"
+                            Margin="0,4,0,0"
+                            Padding="0,14,0,12"
+                            BorderBrush="{StaticResource BrushBorder}"
+                            BorderThickness="0,1,0,0">
+                        <StackPanel>
+                            <TextBlock Text="New to HSMS?"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource BrushMuted}"
+                                       Margin="0,0,0,8"/>
+                            <Button Name="CreateAccountButton"
+                                    Content="Create account"
+                                    Style="{StaticResource SecondaryToolbarButton}"
+                                    MinHeight="42"
+                                    HorizontalAlignment="Stretch"
+                                    Click="CreateAccountButton_OnClick"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Above the primary action so errors stay on-screen at common DPI scales. -->
+                    <TextBlock Grid.Row="12"
+                               Name="ErrorText"
+                               Foreground="{StaticResource BrushDanger}"
+                               TextWrapping="Wrap"
+                               Visibility="Collapsed"
+                               FontSize="13"
+                               LineHeight="18"/>
+
+                    <Button Grid.Row="14"
+                            Name="LoginButton"
+                            Content="Sign in"
+                            Style="{StaticResource PrimaryButton}"
+                            IsDefault="True"
+                            HorizontalAlignment="Stretch"
+                            MinHeight="42"/>
+                </Grid>
+            </Border>
+        </ScrollViewer>
+    </Grid>
+</Window>

@@ -1,0 +1,11 @@
+C:\Users\adiza\HSMS\src\HSMS.Shared\bin\Debug\net8.0\HSMS.Shared.deps.json
+C:\Users\adiza\HSMS\src\HSMS.Shared\bin\Debug\net8.0\HSMS.Shared.dll
+C:\Users\adiza\HSMS\src\HSMS.Shared\bin\Debug\net8.0\HSMS.Shared.pdb
+C:\Users\adiza\HSMS\src\HSMS.Shared\obj\Debug\net8.0\HSMS.Shared.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\adiza\HSMS\src\HSMS.Shared\obj\Debug\net8.0\HSMS.Shared.AssemblyInfoInputs.cache
+C:\Users\adiza\HSMS\src\HSMS.Shared\obj\Debug\net8.0\HSMS.Shared.AssemblyInfo.cs
+C:\Users\adiza\HSMS\src\HSMS.Shared\obj\Debug\net8.0\HSMS.Shared.csproj.CoreCompileInputs.cache
+C:\Users\adiza\HSMS\src\HSMS.Shared\obj\Debug\net8.0\HSMS.Shared.dll
+C:\Users\adiza\HSMS\src\HSMS.Shared\obj\Debug\net8.0\refint\HSMS.Shared.dll
+C:\Users\adiza\HSMS\src\HSMS.Shared\obj\Debug\net8.0\HSMS.Shared.pdb
+C:\Users\adiza\HSMS\src\HSMS.Shared\obj\Debug\net8.0\ref\HSMS.Shared.dll

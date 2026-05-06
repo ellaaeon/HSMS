@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "CRwCuG1jtJiidyDrB8sUi4CP8UR+Fmu5d/GrbXselns=",
+  "Source": "HSMS.Api",
+  "BasePath": "_content/HSMS.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

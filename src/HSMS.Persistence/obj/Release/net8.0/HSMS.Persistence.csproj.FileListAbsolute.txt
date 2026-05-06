@@ -1,0 +1,12 @@
+C:\Users\adiza\HSMS\src\HSMS.Persistence\bin\Release\net8.0\HSMS.Persistence.deps.json
+C:\Users\adiza\HSMS\src\HSMS.Persistence\bin\Release\net8.0\HSMS.Persistence.dll
+C:\Users\adiza\HSMS\src\HSMS.Persistence\bin\Release\net8.0\HSMS.Persistence.pdb
+C:\Users\adiza\HSMS\src\HSMS.Persistence\obj\Release\net8.0\HSMS.Persistence.csproj.AssemblyReference.cache
+C:\Users\adiza\HSMS\src\HSMS.Persistence\obj\Release\net8.0\HSMS.Persistence.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\adiza\HSMS\src\HSMS.Persistence\obj\Release\net8.0\HSMS.Persistence.AssemblyInfoInputs.cache
+C:\Users\adiza\HSMS\src\HSMS.Persistence\obj\Release\net8.0\HSMS.Persistence.AssemblyInfo.cs
+C:\Users\adiza\HSMS\src\HSMS.Persistence\obj\Release\net8.0\HSMS.Persistence.csproj.CoreCompileInputs.cache
+C:\Users\adiza\HSMS\src\HSMS.Persistence\obj\Release\net8.0\HSMS.Persistence.dll
+C:\Users\adiza\HSMS\src\HSMS.Persistence\obj\Release\net8.0\refint\HSMS.Persistence.dll
+C:\Users\adiza\HSMS\src\HSMS.Persistence\obj\Release\net8.0\HSMS.Persistence.pdb
+C:\Users\adiza\HSMS\src\HSMS.Persistence\obj\Release\net8.0\ref\HSMS.Persistence.dll
