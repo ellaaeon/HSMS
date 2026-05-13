@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using HSMS.Application.Audit;
 using HSMS.Persistence.Data;
@@ -34,20 +35,42 @@ public sealed class SterilizationsController(HsmsDbContext dbContext, IAuditServ
         if (toUtc.HasValue) q = q.Where(x => x.CycleDateTime <= toUtc.Value);
         if (!string.IsNullOrWhiteSpace(status)) q = q.Where(x => x.CycleStatus == status);
 
-        var data = await q.OrderByDescending(x => x.CycleDateTime)
+        var batch = await q.OrderByDescending(x => x.CycleDateTime)
             .Take(take)
-            .Select(x => new SterilizationSearchItemDto
+            .Select(x => new
             {
-                SterilizationId = x.SterilizationId,
-                CycleNo = x.CycleNo,
-                CycleDateTimeUtc = x.CycleDateTime,
-                SterilizerNo = dbContext.SterilizerUnits
-                    .Where(u => u.SterilizerId == x.SterilizerId)
-                    .Select(u => u.SterilizerNumber)
-                    .FirstOrDefault() ?? x.SterilizerId.ToString(),
-                CycleStatus = x.CycleStatus
+                x.SterilizationId,
+                x.CycleNo,
+                x.CycleDateTime,
+                x.CycleTimeIn,
+                x.CycleTimeOut,
+                x.CycleStatus,
+                x.SterilizerId,
+                x.CreatedAt,
+                x.RowVersion
             })
             .ToListAsync(cancellationToken);
+
+        var sterIds = batch.Select(x => x.SterilizerId).Distinct().ToList();
+        var sterNames = sterIds.Count == 0
+            ? new Dictionary<int, string>()
+            : await dbContext.SterilizerUnits.AsNoTracking()
+                .Where(u => sterIds.Contains(u.SterilizerId))
+                .ToDictionaryAsync(u => u.SterilizerId, u => u.SterilizerNumber, cancellationToken);
+
+        var data = batch.ConvertAll(x => new SterilizationSearchItemDto
+        {
+            SterilizationId = x.SterilizationId,
+            CycleNo = x.CycleNo,
+            CycleDateTimeUtc = x.CycleDateTime,
+            CycleTimeInUtc = x.CycleTimeIn,
+            RegisteredAtUtc = x.CreatedAt,
+            CycleTimeOutUtc = x.CycleTimeOut,
+            CycleStatus = x.CycleStatus,
+            SterilizerNo = sterNames.GetValueOrDefault(x.SterilizerId) ??
+                           x.SterilizerId.ToString(CultureInfo.InvariantCulture),
+            RowVersion = Convert.ToBase64String(x.RowVersion)
+        });
 
         return Ok(data);
     }
@@ -411,6 +434,183 @@ public sealed class SterilizationsController(HsmsDbContext dbContext, IAuditServ
             rowVersion = Convert.ToBase64String(meta.RowVersion),
             biResultUpdatedAtUtc = meta.BiResultUpdatedAt
         });
+    }
+
+    [HttpPatch("{id:int}/cycle-end")]
+    public async Task<ActionResult<object>> PatchCycleEnd(int id, [FromBody] SterilizationCycleEndPatchDto request,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.RowVersion))
+        {
+            return BadRequest(new ApiError { Code = "VALIDATION_FAILED", Message = "rowVersion is required." });
+        }
+
+        byte[] incomingVersion;
+        try
+        {
+            incomingVersion = Convert.FromBase64String(request.RowVersion);
+        }
+        catch (FormatException)
+        {
+            return BadRequest(new ApiError { Code = "VALIDATION_FAILED", Message = "rowVersion is not valid Base64." });
+        }
+
+        var snapshot = await dbContext.Sterilizations.AsNoTracking()
+            .Where(x => x.SterilizationId == id)
+            .Select(x => new { x.CycleTimeOut, x.RowVersion })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (snapshot is null)
+        {
+            return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Sterilization cycle not found." });
+        }
+
+        var newOut = request.CycleEndUtc;
+        if (snapshot.CycleTimeOut == newOut)
+        {
+            return Ok(new { rowVersion = Convert.ToBase64String(snapshot.RowVersion) });
+        }
+
+        await using (var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken))
+        {
+            try
+            {
+                var affected = await dbContext.Sterilizations
+                    .Where(x => x.SterilizationId == id && x.RowVersion == incomingVersion)
+                    .ExecuteUpdateAsync(setters => setters.SetProperty(x => x.CycleTimeOut, newOut),
+                        cancellationToken);
+
+                if (affected == 0)
+                {
+                    await tx.RollbackAsync(cancellationToken);
+                    return Conflict(new ApiError
+                    {
+                        Code = "CONCURRENCY_CONFLICT",
+                        Message = "Someone updated this record. Press F5 to reload."
+                    });
+                }
+
+                await auditService.AppendAsync(dbContext,
+                    module: AuditModules.Sterilization,
+                    entityName: "tbl_sterilization",
+                    entityId: id.ToString(),
+                    action: AuditActions.SterilizationUpdate,
+                    actorAccountId: GetActorId(),
+                    clientMachine: request.ClientMachine,
+                    oldValues: new { cycleTimeOut = snapshot.CycleTimeOut },
+                    newValues: new { cycleTimeOut = newOut },
+                    correlationId: Guid.NewGuid(),
+                    cancellationToken);
+
+                await dbContext.SaveChangesAsync(cancellationToken);
+                await tx.CommitAsync(cancellationToken);
+            }
+            catch
+            {
+                await tx.RollbackAsync(cancellationToken);
+                throw;
+            }
+        }
+
+        var rowVersion = await dbContext.Sterilizations.AsNoTracking()
+            .Where(x => x.SterilizationId == id)
+            .Select(x => x.RowVersion)
+            .FirstAsync(cancellationToken);
+
+        return Ok(new { rowVersion = Convert.ToBase64String(rowVersion) });
+    }
+
+    [HttpPatch("{id:int}/cycle-status")]
+    public async Task<ActionResult<object>> PatchCycleStatus(int id, [FromBody] SterilizationCycleStatusPatchDto request,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.RowVersion))
+        {
+            return BadRequest(new ApiError { Code = "VALIDATION_FAILED", Message = "rowVersion is required." });
+        }
+
+        var normalized = LoadRecordCycleStatuses.Normalize(request.CycleStatus);
+        if (normalized is null)
+        {
+            return BadRequest(new ApiError
+            {
+                Code = "VALIDATION_FAILED",
+                Message = $"Cycle status must be one of: {string.Join(", ", LoadRecordCycleStatuses.All)}."
+            });
+        }
+
+        byte[] incomingVersion;
+        try
+        {
+            incomingVersion = Convert.FromBase64String(request.RowVersion);
+        }
+        catch (FormatException)
+        {
+            return BadRequest(new ApiError { Code = "VALIDATION_FAILED", Message = "rowVersion is not valid Base64." });
+        }
+
+        var snapshot = await dbContext.Sterilizations.AsNoTracking()
+            .Where(x => x.SterilizationId == id)
+            .Select(x => new { x.CycleStatus, x.RowVersion })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (snapshot is null)
+        {
+            return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Sterilization cycle not found." });
+        }
+
+        if (string.Equals(snapshot.CycleStatus, normalized, StringComparison.OrdinalIgnoreCase))
+        {
+            return Ok(new { rowVersion = Convert.ToBase64String(snapshot.RowVersion) });
+        }
+
+        await using (var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken))
+        {
+            try
+            {
+                var affected = await dbContext.Sterilizations
+                    .Where(x => x.SterilizationId == id && x.RowVersion == incomingVersion)
+                    .ExecuteUpdateAsync(setters => setters.SetProperty(x => x.CycleStatus, normalized),
+                        cancellationToken);
+
+                if (affected == 0)
+                {
+                    await tx.RollbackAsync(cancellationToken);
+                    return Conflict(new ApiError
+                    {
+                        Code = "CONCURRENCY_CONFLICT",
+                        Message = "Someone updated this record. Press F5 to reload."
+                    });
+                }
+
+                await auditService.AppendAsync(dbContext,
+                    module: AuditModules.Sterilization,
+                    entityName: "tbl_sterilization",
+                    entityId: id.ToString(),
+                    action: AuditActions.SterilizationUpdate,
+                    actorAccountId: GetActorId(),
+                    clientMachine: request.ClientMachine,
+                    oldValues: new { cycleStatus = snapshot.CycleStatus },
+                    newValues: new { cycleStatus = normalized },
+                    correlationId: Guid.NewGuid(),
+                    cancellationToken);
+
+                await dbContext.SaveChangesAsync(cancellationToken);
+                await tx.CommitAsync(cancellationToken);
+            }
+            catch
+            {
+                await tx.RollbackAsync(cancellationToken);
+                throw;
+            }
+        }
+
+        var rowVersion = await dbContext.Sterilizations.AsNoTracking()
+            .Where(x => x.SterilizationId == id)
+            .Select(x => x.RowVersion)
+            .FirstAsync(cancellationToken);
+
+        return Ok(new { rowVersion = Convert.ToBase64String(rowVersion) });
     }
 
     private int? GetActorId()

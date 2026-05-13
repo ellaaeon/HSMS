@@ -9,4 +9,6 @@ public sealed class DepartmentItem
     public int? DefaultPcs { get; set; }
     public int? DefaultQty { get; set; }
     public bool IsActive { get; set; }
+    public DateTime? DisabledAt { get; set; }
+    public int? DisabledBy { get; set; }
 }

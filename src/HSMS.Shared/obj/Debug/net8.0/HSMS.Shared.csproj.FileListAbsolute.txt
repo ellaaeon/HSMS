@@ -9,3 +9,4 @@ C:\Users\adiza\HSMS\src\HSMS.Shared\obj\Debug\net8.0\HSMS.Shared.dll
 C:\Users\adiza\HSMS\src\HSMS.Shared\obj\Debug\net8.0\refint\HSMS.Shared.dll
 C:\Users\adiza\HSMS\src\HSMS.Shared\obj\Debug\net8.0\HSMS.Shared.pdb
 C:\Users\adiza\HSMS\src\HSMS.Shared\obj\Debug\net8.0\ref\HSMS.Shared.dll
+c:\Users\adiza\HSMS\src\HSMS.Shared\obj\Debug\net8.0\HSMS.Shared.sourcelink.json

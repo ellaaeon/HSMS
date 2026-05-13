@@ -1,0 +1,102 @@
+<Window x:Class="HSMS.Desktop.Views.AdvancedQaFilterWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Advanced Filters — QA Records"
+        Width="720"
+        Height="520"
+        MinWidth="640"
+        MinHeight="480"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource BrushSurface}"
+        FontFamily="Segoe UI">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="Advanced Filters" FontSize="16" FontWeight="SemiBold" Foreground="#111827"/>
+            <TextBlock Text="Apply precise filters across sterilizer, staff, department, status, reviewer, and date range."
+                       FontSize="12" Foreground="{StaticResource BrushMuted}" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <Border Grid.Row="2" Background="{StaticResource BrushCard}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="12" Padding="14">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="10"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="10"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="10"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Row="0" Grid.Column="0">
+                    <TextBlock Style="{StaticResource CaptionLabel}" Text="Date from"/>
+                    <DatePicker Name="FromDatePicker"/>
+                </StackPanel>
+                <StackPanel Grid.Row="0" Grid.Column="2">
+                    <TextBlock Style="{StaticResource CaptionLabel}" Text="Date to"/>
+                    <DatePicker Name="ToDatePicker"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="2" Grid.Column="0">
+                    <TextBlock Style="{StaticResource CaptionLabel}" Text="Status"/>
+                    <ComboBox Name="StatusCombo">
+                        <ComboBoxItem Content="(all)" IsSelected="True"/>
+                        <ComboBoxItem Content="Draft"/>
+                        <ComboBoxItem Content="PendingReview"/>
+                        <ComboBoxItem Content="Approved"/>
+                        <ComboBoxItem Content="Failed"/>
+                        <ComboBoxItem Content="RetestRequired"/>
+                        <ComboBoxItem Content="Archived"/>
+                    </ComboBox>
+                </StackPanel>
+                <StackPanel Grid.Row="2" Grid.Column="2">
+                    <TextBlock Style="{StaticResource CaptionLabel}" Text="Sterilizer"/>
+                    <ComboBox Name="SterilizerCombo" DisplayMemberPath="Label" SelectedValuePath="Id"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="4" Grid.Column="0">
+                    <TextBlock Style="{StaticResource CaptionLabel}" Text="Department"/>
+                    <ComboBox Name="DepartmentCombo" IsEditable="True"/>
+                </StackPanel>
+                <StackPanel Grid.Row="4" Grid.Column="2">
+                    <TextBlock Style="{StaticResource CaptionLabel}" Text="Technician"/>
+                    <TextBox Name="TechnicianBox" ToolTip="Exact match (for now)."/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="6" Grid.Column="0">
+                    <TextBlock Style="{StaticResource CaptionLabel}" Text="Reviewer (approved/reviewed by)"/>
+                    <ComboBox Name="ReviewerCombo" DisplayMemberPath="Label" SelectedValuePath="Id"/>
+                </StackPanel>
+                <StackPanel Grid.Row="6" Grid.Column="2">
+                    <TextBlock Style="{StaticResource CaptionLabel}" Text="Quick flags"/>
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox Name="FailedOnlyCheck" Content="Failed only" Margin="0,0,12,0"/>
+                        <CheckBox Name="PendingOnlyCheck" Content="Pending only"/>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <DockPanel Grid.Row="4">
+            <Button Content="Reset" Style="{StaticResource SecondaryToolbarButton}" MinWidth="100" Click="Reset_OnClick"/>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Content="Cancel" Style="{StaticResource SecondaryToolbarButton}" MinWidth="100" Margin="0,0,10,0" Click="Cancel_OnClick"/>
+                <Button Content="Apply filters" Style="{StaticResource PrimaryButton}" MinWidth="130" Click="Apply_OnClick"/>
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>
+

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "BNdJQ73YuWg=",
+  "dgSpecHash": "5KIlY/T/WW8=",
   "success": true,
-  "projectFilePath": "c:\\Users\\adiza\\HSMS\\src\\HSMS.Persistence\\HSMS.Persistence.csproj",
+  "projectFilePath": "C:\\Users\\adiza\\HSMS\\src\\HSMS.Persistence\\HSMS.Persistence.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\adiza\\.nuget\\packages\\azure.core\\1.35.0\\azure.core.1.35.0.nupkg.sha512",
     "C:\\Users\\adiza\\.nuget\\packages\\azure.identity\\1.10.3\\azure.identity.1.10.3.nupkg.sha512",

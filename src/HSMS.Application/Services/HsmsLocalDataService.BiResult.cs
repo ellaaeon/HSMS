@@ -40,11 +40,17 @@ public sealed partial class HsmsLocalDataService
 
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
 
-        var exists = await db.Sterilizations.AsNoTracking()
-            .AnyAsync(x => x.SterilizationId == sterilizationId, cancellationToken);
-        if (!exists)
+        var ownerMeta = await db.Sterilizations.AsNoTracking()
+            .Where(x => x.SterilizationId == sterilizationId)
+            .Select(x => new { x.CreatedBy })
+            .SingleOrDefaultAsync(cancellationToken);
+        if (ownerMeta is null)
         {
             return (false, "Sterilization cycle not found.", null, null);
+        }
+        if (DenyIfNotOwnerOrAdmin(ownerMeta.CreatedBy) is { } denied)
+        {
+            return (false, denied, null, null);
         }
 
         var previousBi = await db.Sterilizations.AsNoTracking()
@@ -69,7 +75,8 @@ public sealed partial class HsmsLocalDataService
                     .Where(x => x.SterilizationId == sterilizationId && x.RowVersion == incomingVersion)
                     .ExecuteUpdateAsync(setters => setters
                         .SetProperty(x => x.BiResult, trimmed)
-                        .SetProperty(x => x.BiResultUpdatedAt, DateTime.UtcNow), cancellationToken);
+                        .SetProperty(x => x.BiResultUpdatedAt, DateTime.UtcNow)
+                        .SetProperty(x => x.UpdatedBy, Actor()), cancellationToken);
 
                 if (affected == 0)
                 {

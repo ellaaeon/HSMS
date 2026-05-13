@@ -41,6 +41,7 @@ public sealed partial class HsmsLocalDataService
             .Where(x => x.SterilizationId == sterilizationId)
             .Select(x => new
             {
+                x.CreatedBy,
                 x.BiDaily,
                 x.BiIncubatorTemp,
                 x.BiIncubatorChecked,
@@ -65,6 +66,11 @@ public sealed partial class HsmsLocalDataService
         if (prev is null)
         {
             return (false, "Sterilization cycle not found.", null, null);
+        }
+
+        if (DenyIfNotOwnerOrAdmin(prev.CreatedBy) is { } denied)
+        {
+            return (false, denied, null, null);
         }
 
         if (!prev.RowVersion.SequenceEqual(incomingVersion))
@@ -122,7 +128,8 @@ public sealed partial class HsmsLocalDataService
                         .SetProperty(x => x.BiControlResult24h, normalized.BiControlResult24h)
                         .SetProperty(x => x.BiControlValue24h, normalized.BiControlValue24h)
                         .SetProperty(x => x.Notes, normalized.Notes)
-                        .SetProperty(x => x.BiResultUpdatedAt, now), cancellationToken);
+                        .SetProperty(x => x.BiResultUpdatedAt, now)
+                        .SetProperty(x => x.UpdatedBy, Actor()), cancellationToken);
 
                 if (affected == 0)
                 {

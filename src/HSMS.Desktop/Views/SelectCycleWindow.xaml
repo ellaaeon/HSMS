@@ -1,0 +1,81 @@
+<Window x:Class="HSMS.Desktop.Views.SelectCycleWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Select load cycle"
+        Width="980"
+        Height="620"
+        MinWidth="860"
+        MinHeight="560"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource BrushSurface}"
+        FontFamily="Segoe UI">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="Select a load cycle" FontSize="16" FontWeight="SemiBold" Foreground="#111827"/>
+            <TextBlock Text="This creates a QA test record linked to an existing sterilization load (cycle)."
+                       FontSize="12" Foreground="{StaticResource BrushMuted}" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <Border Grid.Row="2" Background="{StaticResource BrushCard}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="12" Padding="12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBox Name="SearchBox" Height="32" VerticalContentAlignment="Center"
+                         ToolTip="Search by cycle no, sterilizer, operator, status"
+                         TextChanged="SearchBox_OnTextChanged"/>
+                <DatePicker Grid.Column="2" Name="FromPicker" Width="140" SelectedDateChanged="DatePicker_OnChanged"/>
+                <DatePicker Grid.Column="4" Name="ToPicker" Width="140" SelectedDateChanged="DatePicker_OnChanged"/>
+                <Button Grid.Column="6" Content="Refresh" Style="{StaticResource SecondaryToolbarButton}" MinWidth="90" Click="Refresh_OnClick"/>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="4" Background="White" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="12" Padding="10">
+            <DataGrid Name="Grid"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      IsReadOnly="True"
+                      SelectionUnit="FullRow"
+                      HeadersVisibility="Column"
+                      FontSize="12">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="ID" Binding="{Binding SterilizationId}" Width="70"/>
+                    <DataGridTextColumn Header="Cycle No" Binding="{Binding CycleNo}" Width="110"/>
+                    <DataGridTextColumn Header="Cycle Program" Binding="{Binding CycleProgram}" Width="140"/>
+                    <DataGridTextColumn Header="Sterilizer" Binding="{Binding SterilizerNo}" Width="110"/>
+                    <DataGridTextColumn Header="Operator" Binding="{Binding OperatorName}" Width="170"/>
+                    <DataGridTextColumn Header="Status" Binding="{Binding CycleStatus}" Width="120"/>
+                    <DataGridTextColumn Header="Registered (UTC)" Binding="{Binding RegisteredAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="170"/>
+                    <DataGridTextColumn Header="Pcs" Binding="{Binding TotalPcs}" Width="70"/>
+                    <DataGridTextColumn Header="Qty" Binding="{Binding TotalQty}" Width="70"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <DockPanel Grid.Row="6">
+            <TextBlock Name="StatusText" Foreground="{StaticResource BrushMuted}" VerticalAlignment="Center"/>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Content="Cancel" Style="{StaticResource SecondaryToolbarButton}" MinWidth="100" Margin="0,0,10,0" Click="Cancel_OnClick"/>
+                <Button Content="Select" Style="{StaticResource PrimaryButton}" MinWidth="110" Click="Select_OnClick"/>
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>
+

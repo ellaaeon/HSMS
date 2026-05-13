@@ -6,6 +6,7 @@
         xmlns:conv="clr-namespace:HSMS.Desktop.Converters"
         xmlns:models="clr-namespace:HSMS.Desktop.Models"
         xmlns:bi="clr-namespace:HSMS.Desktop.Controls"
+        xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
         mc:Ignorable="d"
         Title="HSMS"
         Height="780"
@@ -108,6 +109,57 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
+        <Style x:Key="AnalyticsReportToggle" TargetType="{x:Type ToggleButton}">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="Padding" Value="12,5"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#475569"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ToggleButton}">
+                        <Border x:Name="ToggleChrome"
+                                Background="#F8FAFC"
+                                BorderBrush="Transparent"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              RecognizesAccessKey="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ToggleChrome" Property="Background" Value="#EEF6FF"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="ToggleChrome" Property="Background" Value="{StaticResource BrushPrimary}"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Register load: tighter than global theme so the page fits vertically without paging the outer viewer. -->
+        <Style x:Key="RegisterDenseCombo" TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        <Style x:Key="RegisterDenseTextBox" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        <Style x:Key="RegisterDenseCaption" TargetType="TextBlock" BasedOn="{StaticResource CaptionLabel}">
+            <Setter Property="Margin" Value="0,0,0,2"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -152,9 +204,11 @@
                     <TextBlock Text="Menu" Foreground="{StaticResource BrushMuted}" FontSize="11" Margin="12,0,12,4" FontWeight="SemiBold"/>
                     <Button Name="HomeButton" Content="  Home" Style="{StaticResource NavButton}" Click="HomeButton_OnClick" Margin="0,0,0,4"/>
                     <Button Name="RegisterLoadButton" Content="  Register Load" Style="{StaticResource NavButtonActive}" Click="CyclesButton_OnClick" Margin="0,0,0,4"/>
-                    <Button Name="InstrumentsCheckButton" Content="  Instruments Check" Style="{StaticResource NavButton}" Click="NavPlaceholder_OnClick" Tag="Instruments Check" Margin="0,0,0,4"/>
+                    <Button Name="InstrumentsCheckButton" Content="  Instruments Check" Style="{StaticResource NavButton}" Click="InstrumentsCheckButton_OnClick" Margin="0,0,0,4"/>
+                    <Button Name="QaTestsButton" Content="  Test Records (QA)" Style="{StaticResource NavButton}" Click="QaTestsButton_OnClick" Margin="0,0,0,4"/>
                     <Button Name="LoadRecordsButton" Content="  Load Records" Style="{StaticResource NavButton}" Click="LoadRecordsButton_OnClick" Margin="0,0,0,4"/>
                     <Button Name="BiLogSheetsButton" Content="  BI Log Sheets" Style="{StaticResource NavButton}" Click="BiLogSheetsButton_OnClick" Margin="0,0,0,4"/>
+                    <Button Name="AnalyticsButton" Content="  Analytics" Style="{StaticResource NavButton}" Click="AnalyticsButton_OnClick" Margin="0,0,0,4"/>
                     <Button Name="MachinesButton" Content="  Machines" Style="{StaticResource NavButton}" Click="NavPlaceholder_OnClick" Tag="Machines" Margin="0,0,0,4"/>
                     <Button Name="InventoryButton" Content="  Inventory" Style="{StaticResource NavButton}" Click="NavPlaceholder_OnClick" Tag="Inventory" Margin="0,0,0,4"/>
                     <Button Name="ChecklistButton" Content="  Checklist" Style="{StaticResource NavButton}" Click="NavPlaceholder_OnClick" Tag="Checklist" Margin="0,0,0,4"/>
@@ -165,35 +219,31 @@
                 </StackPanel>
             </Border>
 
-            <Border Name="MainContentBorder" Grid.Column="2" Background="{StaticResource BrushCard}" CornerRadius="10" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" Padding="24">
+            <Border Name="MainContentBorder" Grid.Column="2" Background="{StaticResource BrushCard}" CornerRadius="10" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" Padding="14">
                 <Grid>
                     <ScrollViewer Name="MainContentScrollViewer" VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled"
+                                  VerticalAlignment="Stretch"
+                                  VerticalContentAlignment="Stretch"
                                   CanContentScroll="False"
                                   PanningMode="VerticalOnly">
-                    <Grid>
+                    <Grid Name="MainContentHostGrid" MinHeight="0" VerticalAlignment="Stretch">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="16"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="10"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="10"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="10"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="16"/>
-                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*" MinHeight="0"/>
                     </Grid.RowDefinitions>
 
                     <Grid Grid.Row="0">
-                        <TextBlock Name="RegisterLoadTitle" Text="Enter Sterilization Record" FontSize="16" FontWeight="SemiBold" Foreground="#212529"/>
+                        <TextBlock Name="RegisterLoadTitle" Text="Enter Sterilization Record" FontSize="14" FontWeight="SemiBold" Foreground="#212529"/>
                         <TextBlock Name="LoadRecordsTitle" Text="Load records" FontSize="16" FontWeight="SemiBold" Foreground="#212529" Visibility="Collapsed"/>
                         <TextBlock Name="HomeDashboardTitle" Text="Home" FontSize="16" FontWeight="SemiBold" Foreground="#212529" Visibility="Collapsed"/>
+                        <TextBlock Name="AnalyticsTitle" Text="Analytics" FontSize="16" FontWeight="SemiBold" Foreground="#212529" Visibility="Collapsed"/>
+                        <TextBlock Name="InstrumentsCheckTitle" Text="Instruments check" FontSize="16" FontWeight="SemiBold" Foreground="#212529" Visibility="Collapsed"/>
+                        <TextBlock Name="TestRecordsTitle" Text="Test records (QA)" FontSize="16" FontWeight="SemiBold" Foreground="#212529" Visibility="Collapsed"/>
                     </Grid>
 
                     <!-- Home dashboard (summary + shortcuts; F5 refreshes while this view is visible) -->
-                    <Grid Name="HomeView" Grid.Row="2" Grid.RowSpan="9" Visibility="Collapsed">
+                    <Grid Name="HomeView" Grid.Row="1" Visibility="Collapsed">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="14"/>
@@ -281,14 +331,32 @@
                         </DataGrid>
                     </Grid>
 
-                    <Grid Name="RegisterLoadView" Grid.Row="2">
+                    <ContentControl Name="TestRecordsHost" Grid.Row="1" Visibility="Collapsed"/>
+
+                    <!-- Register load: stretches into row * ; only the pending-items grid scrolls internally. -->
+                    <Grid Name="RegisterLoadShell" Grid.Row="1" MinHeight="0" VerticalAlignment="Stretch" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" MinHeight="0"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Top block (form); bottom row pins actions so * height goes to pending-items grid -->
+                        <Grid Grid.Row="0" MinHeight="0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*" MinHeight="200"/>
+                            </Grid.RowDefinitions>
+
+                    <Grid Name="RegisterLoadView" Grid.Row="0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="2"/>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="2"/>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="2"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
@@ -298,8 +366,8 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Row="0" Grid.Column="0">
-                            <TextBlock Style="{StaticResource CaptionLabel}" Text="Sterilization type (temperature)"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <TextBlock Style="{StaticResource RegisterDenseCaption}" Text="Sterilization type (temperature)"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                                 <RadioButton Name="SterTempHighRadio" GroupName="SterTempMode" Content="High temperature" IsChecked="True"
                                              Margin="0,0,20,0" VerticalAlignment="Center"
                                              Checked="SterTempHighRadio_OnChecked"/>
@@ -308,26 +376,26 @@
                             </StackPanel>
                         </StackPanel>
                         <StackPanel Grid.Row="0" Grid.Column="2">
-                            <TextBlock Style="{StaticResource CaptionLabel}" Text="Date"/>
-                            <DatePicker Name="CycleEntryDatePicker" SelectedDateFormat="Short" Margin="0,6,0,0"/>
+                            <TextBlock Style="{StaticResource RegisterDenseCaption}" Text="Date"/>
+                            <DatePicker Name="CycleEntryDatePicker" SelectedDateFormat="Short" Margin="0,2,0,0" MinHeight="28" FontSize="13"/>
                         </StackPanel>
 
                         <StackPanel Grid.Row="2" Grid.Column="0">
-                            <TextBlock Style="{StaticResource CaptionLabel}" Text="Sterilizer No."/>
-                            <ComboBox Name="SterilizerCombo" DisplayMemberPath="SterilizerNo" SelectedValuePath="SterilizerId" IsEditable="False" Margin="0,6,0,0"/>
+                            <TextBlock Style="{StaticResource RegisterDenseCaption}" Text="Sterilizer No."/>
+                            <ComboBox Name="SterilizerCombo" Style="{StaticResource RegisterDenseCombo}" DisplayMemberPath="SterilizerNo" SelectedValuePath="SterilizerId" IsEditable="False" Margin="0,2,0,0"/>
                         </StackPanel>
                         <StackPanel Grid.Row="2" Grid.Column="2">
-                            <TextBlock Style="{StaticResource CaptionLabel}" Text="Operator"/>
-                            <TextBox Name="OperatorTextBox" IsReadOnly="True" Margin="0,6,0,0"/>
+                            <TextBlock Style="{StaticResource RegisterDenseCaption}" Text="Operator"/>
+                            <TextBox Name="OperatorTextBox" Style="{StaticResource RegisterDenseTextBox}" IsReadOnly="True" Margin="0,2,0,0"/>
                         </StackPanel>
 
                         <StackPanel Grid.Row="4" Grid.Column="0">
-                            <TextBlock Style="{StaticResource CaptionLabel}" Text="Cycle"/>
-                            <ComboBox Name="CycleProgramCombo" IsEditable="False" Margin="0,6,0,0"/>
+                            <TextBlock Style="{StaticResource RegisterDenseCaption}" Text="Cycle"/>
+                            <ComboBox Name="CycleProgramCombo" Style="{StaticResource RegisterDenseCombo}" IsEditable="False" Margin="0,2,0,0"/>
                         </StackPanel>
                         <StackPanel Grid.Row="4" Grid.Column="2">
-                            <TextBlock Style="{StaticResource CaptionLabel}" Text="Cycle No."/>
-                            <TextBox Name="CycleNoTextBox" Margin="0,6,0,0" IsReadOnly="True"
+                            <TextBlock Style="{StaticResource RegisterDenseCaption}" Text="Cycle No."/>
+                            <TextBox Name="CycleNoTextBox" Style="{StaticResource RegisterDenseTextBox}" Margin="0,2,0,0" IsReadOnly="True"
                                      IsReadOnlyCaretVisible="False"
                                      IsTabStop="False"
                                      ContextMenu="{x:Null}"
@@ -335,109 +403,106 @@
                         </StackPanel>
 
                         <StackPanel Grid.Row="6" Grid.Column="0">
-                            <TextBlock Style="{StaticResource CaptionLabel}" Text="Biological indicator"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <TextBlock Style="{StaticResource RegisterDenseCaption}" Text="Biological indicator"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                                 <RadioButton Name="BiIndicatorYesRadio" GroupName="BiIndicator" Content="Yes" IsChecked="True" Margin="0,0,20,0"/>
                                 <RadioButton Name="BiIndicatorNoRadio" GroupName="BiIndicator" Content="No"/>
                             </StackPanel>
 
-                            <StackPanel Name="ImplantsOptionsPanel" Margin="0,10,0,0">
-                                <TextBlock Style="{StaticResource CaptionLabel}" Text="Implants"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <StackPanel Name="ImplantsOptionsPanel" Margin="0,2,0,0">
+                                <TextBlock Style="{StaticResource RegisterDenseCaption}" Text="Implants"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                                     <RadioButton Name="ImplantsYesRadio" GroupName="ImplantsOptions" Content="Yes" Margin="0,0,20,0"/>
                                     <RadioButton Name="ImplantsNoRadio" GroupName="ImplantsOptions" Content="No" IsChecked="True"/>
                                 </StackPanel>
                             </StackPanel>
 
-                            <StackPanel Name="BiLotPanel" Margin="0,10,0,0">
-                                <TextBlock Style="{StaticResource CaptionLabel}" Text="BI Lot#"/>
-                                <TextBox Name="BiLotNoTextBox"/>
+                            <StackPanel Name="BiLotPanel" Margin="0,2,0,0">
+                                <TextBlock Style="{StaticResource RegisterDenseCaption}" Text="BI Lot#"/>
+                                <TextBox Name="BiLotNoTextBox" Style="{StaticResource RegisterDenseTextBox}" Margin="0,2,0,0"/>
                             </StackPanel>
                         </StackPanel>
                         <StackPanel Grid.Row="6" Grid.Column="2" VerticalAlignment="Top">
-                            <TextBlock Style="{StaticResource CaptionLabel}" Text="Temperature °C"/>
-                            <TextBox Name="TemperatureTextBox" Margin="0,6,0,0"/>
+                            <TextBlock Style="{StaticResource RegisterDenseCaption}" Text="Temperature °C"/>
+                            <TextBox Name="TemperatureTextBox" Style="{StaticResource RegisterDenseTextBox}" Margin="0,2,0,0"/>
 
                             <!-- High-temp quick picks: common autoclave presets -->
-                            <UniformGrid Name="HighTempPresetPanel" Rows="1" Columns="2" Margin="0,8,0,0">
-                                <Button Name="Preset134Button" Content="134°C" MinHeight="30" Margin="0,0,8,0"
+                            <UniformGrid Name="HighTempPresetPanel" Rows="1" Columns="2" Margin="0,2,0,0">
+                                <Button Name="Preset134Button" Content="134°C" MinHeight="22" Margin="0,0,8,0" Padding="8,4" FontSize="12"
                                         ToolTip="Set temperature 134°C and exposure 4 minutes"
                                         Click="Preset134Button_OnClick"/>
-                                <Button Name="Preset121Button" Content="121°C" MinHeight="30"
+                                <Button Name="Preset121Button" Content="121°C" MinHeight="22" Padding="8,4" FontSize="12"
                                         ToolTip="Set temperature 121°C and exposure 20 minutes"
                                         Click="Preset121Button_OnClick"/>
                             </UniformGrid>
 
-                            <TextBlock Style="{StaticResource CaptionLabel}" Text="Exposure (min)" Margin="0,10,0,0"/>
-                            <TextBox Name="ExposureMinutesTextBox" Margin="0,6,0,0"/>
+                            <TextBlock Style="{StaticResource RegisterDenseCaption}" Text="Exposure (min)" Margin="0,2,0,0"/>
+                            <TextBox Name="ExposureMinutesTextBox" Style="{StaticResource RegisterDenseTextBox}" Margin="0,2,0,0"/>
                         </StackPanel>
                     </Grid>
 
-                    <Border Name="RegisterLoadQuickHelp" Grid.Row="3" Background="#EEF6FF" BorderBrush="#C9E1FF" BorderThickness="1" CornerRadius="6" Padding="10,6">
-                        <TextBlock Foreground="#0F4C81" FontSize="12" FontWeight="SemiBold"
-                                   Text="Quick entry: Enter = next field/cell • Cycle No + Enter = load/new • Ctrl+S = save • F5 = refresh • F9 = print"/>
+                    <Border Name="RegisterLoadQuickHelp" Grid.Row="1" Background="#EEF6FF" BorderBrush="#C9E1FF" BorderThickness="1" CornerRadius="4" Padding="4,2">
+                        <TextBlock Foreground="#0F4C81" FontSize="10" FontWeight="SemiBold" TextWrapping="Wrap"
+                                   Text="Enter / arrows • Add to list • Cycle No+Enter • Ctrl+S save • F5 • F9"/>
                     </Border>
 
-                    <Grid Name="RegisterLoadMetricsView" Grid.Row="4">
+                    <Grid Name="RegisterLoadStatusDoctorNotesView" Grid.Row="2">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Style="{StaticResource CaptionLabel}" Text="BI result (when indicator is Yes)"/>
-                        <ComboBox Grid.Row="1" Name="BiResultCombo" IsEditable="False" Margin="0,6,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="0.85*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="0.85*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="1.25*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource RegisterDenseCaption}" Text="Cycle status"/>
+                        <TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource RegisterDenseCaption}" Text="BI result"/>
+                        <TextBlock Grid.Row="0" Grid.Column="4" Style="{StaticResource RegisterDenseCaption}" Text="Doctor"/>
+                        <TextBlock Grid.Row="0" Grid.Column="6" Style="{StaticResource RegisterDenseCaption}" Text="Department"/>
+                        <TextBlock Grid.Row="0" Grid.Column="8" Style="{StaticResource RegisterDenseCaption}" Text="Notes"/>
+                        <ComboBox Grid.Row="1" Grid.Column="0" Name="CycleStatusCombo" Style="{StaticResource RegisterDenseCombo}" IsEditable="False" Margin="0,2,0,0">
+                            <ComboBoxItem Content="Draft" IsSelected="True"/>
+                            <ComboBoxItem Content="Completed"/>
+                            <ComboBoxItem Content="Voided"/>
+                        </ComboBox>
+                        <ComboBox Grid.Row="1" Grid.Column="2" Name="BiResultCombo" Style="{StaticResource RegisterDenseCombo}" IsEditable="False" Margin="0,2,0,0">
                             <ComboBoxItem Content="Pending" IsSelected="True"/>
                             <ComboBoxItem Content="Pass"/>
                             <ComboBoxItem Content="Fail"/>
                             <ComboBoxItem Content="N/A"/>
                         </ComboBox>
+                        <ComboBox Grid.Row="1" Grid.Column="4" Name="DoctorRoomCombo" Style="{StaticResource RegisterDenseCombo}" Margin="0,2,0,0"
+                                  ItemsSource="{Binding DoctorRoomOptions, RelativeSource={RelativeSource AncestorType=Window}}"
+                                  IsEditable="True"
+                                  IsTextSearchEnabled="True"
+                                  IsTextSearchCaseSensitive="False"
+                                  StaysOpenOnEdit="True"
+                                  ToolTipService.ToolTip="Doctor (type to add new)"/>
+                        <ComboBox Grid.Row="1" Grid.Column="6" Name="DepartmentCombo" Style="{StaticResource RegisterDenseCombo}" Margin="0,2,0,0"
+                                  ItemsSource="{Binding DepartmentOptions, RelativeSource={RelativeSource AncestorType=Window}}"
+                                  IsEditable="True"
+                                  IsTextSearchEnabled="True"
+                                  IsTextSearchCaseSensitive="False"
+                                  StaysOpenOnEdit="True"
+                                  ToolTipService.ToolTip="Department (type to add new)"/>
+                        <TextBox Grid.Row="1" Grid.Column="8" Name="NotesTextBox" Style="{StaticResource RegisterDenseTextBox}" Margin="0,2,0,0"
+                                 Height="48" MaxHeight="48" TextWrapping="Wrap" AcceptsReturn="True"
+                                 VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"/>
                     </Grid>
 
-                    <Grid Name="RegisterLoadStatusDoctorNotesView" Grid.Row="6">
+                    <Grid Name="RegisterLoadItemInputView" Grid.Row="3" Margin="0,2,0,0" MinHeight="0" VerticalAlignment="Stretch">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="12"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="12"/>
-                            <ColumnDefinition Width="2*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource CaptionLabel}" Text="Cycle status"/>
-                        <TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource CaptionLabel}" Text="Doctor/Department"/>
-                        <TextBlock Grid.Row="0" Grid.Column="4" Style="{StaticResource CaptionLabel}" Text="Notes"/>
-                        <ComboBox Grid.Row="1" Grid.Column="0" Name="CycleStatusCombo" IsEditable="False">
-                            <ComboBoxItem Content="Draft" IsSelected="True"/>
-                            <ComboBoxItem Content="Completed"/>
-                            <ComboBoxItem Content="Voided"/>
-                        </ComboBox>
-                        <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Vertical">
-                            <ComboBox Name="DoctorRoomCombo"
-                                      ItemsSource="{Binding DoctorRoomOptions, RelativeSource={RelativeSource AncestorType=Window}}"
-                                      IsEditable="True"
-                                      IsTextSearchEnabled="True"
-                                      IsTextSearchCaseSensitive="False"
-                                      StaysOpenOnEdit="True"
-                                      ToolTipService.ToolTip="Doctor/Room (type to add new)"/>
-                            <ComboBox Name="DepartmentCombo"
-                                      Margin="0,6,0,0"
-                                      ItemsSource="{Binding DepartmentOptions, RelativeSource={RelativeSource AncestorType=Window}}"
-                                      IsEditable="True"
-                                      IsTextSearchEnabled="True"
-                                      IsTextSearchCaseSensitive="False"
-                                      StaysOpenOnEdit="True"
-                                      ToolTipService.ToolTip="Department (type to add new)"/>
-                        </StackPanel>
-                        <StackPanel Grid.Row="1" Grid.Column="4" Orientation="Vertical">
-                            <TextBox Name="NotesTextBox"/>
-                        </StackPanel>
-                    </Grid>
-
-                    <Grid Name="RegisterLoadItemInputView" Grid.Row="8" Margin="0,6,0,0">
-                        <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*" MinHeight="120"/>
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="2*"/>
@@ -447,41 +512,181 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource CaptionLabel}" Text="Item Description"/>
-                        <TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource CaptionLabel}" Text="Pcs"/>
-                        <TextBlock Grid.Row="0" Grid.Column="4" Style="{StaticResource CaptionLabel}" Text="Qty"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource RegisterDenseCaption}" Text="Item Description"/>
+                        <TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource RegisterDenseCaption}" Text="Pcs"/>
+                        <TextBlock Grid.Row="0" Grid.Column="4" Style="{StaticResource RegisterDenseCaption}" Text="Qty"/>
 
-                        <ComboBox Grid.Row="1" Grid.Column="0" Name="RegisterItemCombo"
+                        <ComboBox Grid.Row="1" Grid.Column="0" Name="RegisterItemCombo" Style="{StaticResource RegisterDenseCombo}"
                                   ItemsSource="{Binding ItemDescriptionOptions, RelativeSource={RelativeSource AncestorType=Window}}"
                                   IsEditable="True" IsTextSearchEnabled="True" IsTextSearchCaseSensitive="False" StaysOpenOnEdit="True"
-                                  Margin="0,6,0,0"
+                                  Margin="0,2,0,0"
                                   ToolTipService.ToolTip="Item description (type to add new)"/>
-                        <ComboBox Grid.Row="1" Grid.Column="2" Name="RegisterPcsCombo" Margin="0,6,0,0"
+                        <ComboBox Grid.Row="1" Grid.Column="2" Name="RegisterPcsCombo" Style="{StaticResource RegisterDenseCombo}" Margin="0,2,0,0"
                                   IsEditable="True" IsTextSearchEnabled="True" IsTextSearchCaseSensitive="False" StaysOpenOnEdit="True"
                                   ToolTipService.ToolTip="Pcs (type or pick)"/>
-                        <ComboBox Grid.Row="1" Grid.Column="4" Name="RegisterQtyCombo" Margin="0,6,0,0"
+                        <ComboBox Grid.Row="1" Grid.Column="4" Name="RegisterQtyCombo" Style="{StaticResource RegisterDenseCombo}" Margin="0,2,0,0"
                                   IsEditable="True" IsTextSearchEnabled="True" IsTextSearchCaseSensitive="False" StaysOpenOnEdit="True"
                                   ToolTipService.ToolTip="Qty (type or pick)"/>
+
+                        <StackPanel Grid.Row="2" Grid.ColumnSpan="5" Orientation="Horizontal" Margin="0,2,0,0">
+                            <Button Name="RegisterAddItemLineButton" Content="Add to list" MinWidth="100" Margin="0,0,8,0"
+                                    Style="{StaticResource SecondaryToolbarButton}" Click="RegisterAddItemLineButton_OnClick"/>
+                            <TextBlock VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource BrushMuted}" FontSize="10"
+                                       Text="Copies Doctor + Department above; edit per row. Save uses the table (or the three fields if empty)."/>
+                        </StackPanel>
+
+                        <DataGrid Grid.Row="3" Grid.ColumnSpan="5" Name="RegisterPendingItemsGrid" Margin="0,4,0,0"
+                                  ItemsSource="{Binding RegisterPendingItems, RelativeSource={RelativeSource AncestorType=Window}}"
+                                  AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                                  HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                                  MinHeight="96" VerticalAlignment="Stretch" VerticalScrollBarVisibility="Auto"
+                                  ScrollViewer.CanContentScroll="False"
+                                  BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" Background="White">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Item description" Binding="{Binding ItemName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="2*"/>
+                                <DataGridTextColumn Header="Pcs" Binding="{Binding Pcs, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" Width="70"/>
+                                <DataGridTextColumn Header="Qty" Binding="{Binding Qty, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" Width="70"/>
+                                <DataGridTextColumn Header="Department" Binding="{Binding DepartmentName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
+                                <DataGridTextColumn Header="Doctor" Binding="{Binding DoctorOrRoom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
+                                <DataGridTemplateColumn Header="" Width="72">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Content="Remove" Padding="6,2" FontSize="11" Style="{StaticResource SecondaryToolbarButton}"
+                                                    Click="RegisterPendingItemRemove_OnClick"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
                     </Grid>
 
-                    <StackPanel Name="RegisterLoadButtonsView" Grid.Row="10" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,0">
+                    </Grid>
+                    <!-- end inner Register load block (grid + item entry / list) -->
+
+                    <StackPanel Name="RegisterLoadButtonsView" Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
                         <Button Name="RefreshButton" Content="Refresh" Style="{StaticResource SecondaryToolbarButton}" MinWidth="120" Margin="0,0,10,0"/>
                         <Button Name="PrintButton" Content="Print report" Style="{StaticResource SecondaryToolbarButton}" MinWidth="130" Margin="0,0,10,0"/>
                         <Button Name="SaveButton" Content="Save record" Style="{StaticResource SuccessToolbarButton}" MinWidth="160"/>
                     </StackPanel>
 
-                    <!-- Load Records view -->
-                    <Grid Name="LoadRecordsView" Grid.Row="2" Grid.RowSpan="9" Visibility="Collapsed">
+                    </Grid>
+                    <!-- end RegisterLoadShell -->
+
+                    <!-- Instruments Check view -->
+                    <Grid Name="InstrumentsCheckView" Grid.Row="1" Visibility="Collapsed">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="12"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <Border Grid.Row="0" Background="#F8FAFD" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                        <Border Grid.Row="0" Background="#F8FAFC" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="12" Padding="16,14">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Style="{StaticResource CaptionLabel}" Text="Search (name / serial / checked by)"/>
+                                    <TextBox Name="InstrumentsCheckSearchBox"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                    <Button Name="InstrumentsCheckExportPdfButton" Content="Export PDF" Style="{StaticResource SecondaryToolbarButton}" MinWidth="120" Margin="0,0,10,0"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="2" Background="White" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="12" Padding="16,14">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="10"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="10"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="12"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Add instrument check item" FontSize="13" FontWeight="SemiBold" Foreground="#111827"/>
+                                <Grid Grid.Row="2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Style="{StaticResource CaptionLabel}" Text="Name / item description"/>
+                                        <ComboBox Name="InstrumentsCheckItemCombo" ItemsSource="{Binding ItemDescriptionOptions}" IsEditable="True"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Style="{StaticResource CaptionLabel}" Text="Serial / reference"/>
+                                        <TextBox Name="InstrumentsCheckSerialTextBox"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Grid.Row="4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Style="{StaticResource CaptionLabel}" Text="Checked by"/>
+                                        <TextBox Name="InstrumentsCheckCheckedByTextBox" IsReadOnly="True" Background="#F8FAFC" BorderBrush="{StaticResource BrushBorder}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Style="{StaticResource CaptionLabel}" Text="Witness by (optional)"/>
+                                        <TextBox Name="InstrumentsCheckWitnessByTextBox"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="4">
+                                        <TextBlock Style="{StaticResource CaptionLabel}" Text="Remarks (optional)"/>
+                                        <TextBox Name="InstrumentsCheckRemarksTextBox"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Name="InstrumentsCheckAddButton" Content="Add" Style="{StaticResource PrimaryButton}" MinWidth="110"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <DataGrid Grid.Row="4" Name="InstrumentsCheckGrid"
+                                  AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                                  MinHeight="220" VerticalAlignment="Stretch"
+                                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                                  BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" Background="White">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Checked at" Binding="{Binding CheckedAtLocal, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="170" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Name" Binding="{Binding ItemName, UpdateSourceTrigger=PropertyChanged}" Width="2*"/>
+                                <DataGridTextColumn Header="Serial/Reference" Binding="{Binding SerialReference, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
+                                <DataGridTextColumn Header="Checked by" Binding="{Binding CheckedBy, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+                                <DataGridTextColumn Header="Witness by" Binding="{Binding WitnessBy, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+                                <DataGridTextColumn Header="Remarks" Binding="{Binding Remarks, UpdateSourceTrigger=PropertyChanged}" Width="2*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+
+                    <!-- Load Records view -->
+                    <Grid Name="LoadRecordsView" Grid.Row="1" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="*" MinHeight="200"/>
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" Background="#F8FAFC" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="12" Padding="16,14">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="14"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="14"/>
+                                    <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="14"/>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="10"/>
@@ -489,53 +694,125 @@
                                 </Grid.ColumnDefinitions>
 
                                 <StackPanel Grid.Column="0">
-                                    <TextBlock Style="{StaticResource CaptionLabel}" Text="Search cycle no. (optional)"/>
-                                    <TextBox Name="LoadRecordsSearchBox"/>
+                                    <TextBlock Style="{StaticResource CaptionLabel}" Text="Search (cycle, sterilizer, operator, status, items…)"/>
+                                    <TextBox Name="LoadRecordsSearchBox" KeyDown="LoadRecordsSearchBox_OnKeyDown"/>
                                 </StackPanel>
 
-                                <Button Grid.Column="2" Name="LoadRecordsRefreshButton" Content="Refresh" Style="{StaticResource PrimaryButton}" MinWidth="110" VerticalAlignment="Bottom"/>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Style="{StaticResource CaptionLabel}" Text="From (local)"/>
+                                    <DatePicker Name="LoadRecordsFromDate" SelectedDateFormat="Short" Width="130"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="4">
+                                    <TextBlock Style="{StaticResource CaptionLabel}" Text="To (local)"/>
+                                    <DatePicker Name="LoadRecordsToDate" SelectedDateFormat="Short" Width="130"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="6" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                                    <Button Name="LoadRecordsSearchButton" Content="Search" Style="{StaticResource SecondaryToolbarButton}" MinWidth="100" Margin="0,0,8,0"/>
+                                    <Button Name="LoadRecordsRefreshButton" Content="Refresh" Style="{StaticResource PrimaryButton}" MinWidth="110"/>
+                                </StackPanel>
                             </Grid>
                         </Border>
 
                         <DataGrid Grid.Row="2" Name="LoadRecordsGrid"
-                                  AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
-                                  MinHeight="360" MaxHeight="620"
+                                  AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                                  MinHeight="200" VerticalAlignment="Stretch"
+                                  VirtualizingPanel.IsVirtualizing="False"
                                   VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
-                                  BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" Background="White">
+                                  BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" Background="White"
+                                  MouseDoubleClick="LoadRecordsGrid_OnMouseDoubleClick">
+                            <DataGrid.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Preview selected load record" Click="LoadRecordsPreviewSelected_OnClick"/>
+                                    <MenuItem Header="Print selected load record" Click="LoadRecordsPrintSelected_OnClick"/>
+                                    <MenuItem Header="Export selected (PDF)..." Click="LoadRecordsExportSelected_OnClick"/>
+                                </ContextMenu>
+                            </DataGrid.ContextMenu>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="ID" Binding="{Binding SterilizationId}" Width="70"/>
-                                <DataGridTextColumn Header="Cycle No" Binding="{Binding CycleNo}" Width="140"/>
-                                <DataGridTextColumn Header="Sterilizer" Binding="{Binding SterilizerNo}" Width="120"/>
-                                <DataGridTextColumn Header="Status" Binding="{Binding CycleStatus}" Width="110"/>
-                                <DataGridTextColumn Header="Load time" IsReadOnly="True" Binding="{Binding CycleDateTimeUtc, Converter={StaticResource StoredUtcToDeploymentDateTime}}" Width="170"/>
+                                <DataGridTextColumn Header="ID" Binding="{Binding SterilizationId}" Width="70" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Cycle No" Binding="{Binding CycleNo}" Width="140" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Sterilizer" Binding="{Binding SterilizerNo}" Width="120" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Operator" Binding="{Binding OperatorName}" Width="160" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Pcs" Binding="{Binding TotalPcs}" Width="70" IsReadOnly="True"/>
+                                <DataGridTextColumn Header="Qty" Binding="{Binding TotalQty}" Width="70" IsReadOnly="True"/>
+                                <DataGridTemplateColumn Header="Status" Width="128">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding CycleStatus}" VerticalAlignment="Center" Margin="10,6,10,6"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                        <DataTemplate>
+                                            <ComboBox Style="{StaticResource RegisterDenseCombo}" IsEditable="False"
+                                                      ItemsSource="{Binding LoadRecordsCycleStatusChoices, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                      VerticalContentAlignment="Center" Margin="4,3"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellEditingTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Cycle start"
+                                                    IsReadOnly="True"
+                                                    Binding="{Binding CycleStartUtc, Converter={StaticResource StoredUtcToDeploymentDateTime}}"
+                                                    Width="170"/>
+                                <DataGridTemplateColumn Header="Cycle end" Width="180">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Margin="10,6,10,6" VerticalAlignment="Center" FontFamily="Cascadia Mono, Consolas, Segoe UI"
+                                                       Text="{Binding CycleTimeOutUtc, Converter={StaticResource StoredUtcToDeploymentDateTime}}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                        <DataTemplate>
+                                            <bi:LoadRecordCycleEndTimeTextBox HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellEditingTemplate>
+                                </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
 
-                    <!-- BI Log Sheets view (printed as a unit: logo, title, filters, grid) -->
-                    <Grid Name="BiLogSheetsView" Grid.Row="2" Grid.RowSpan="9" Visibility="Collapsed">
+                    <!-- BI Log Sheets view -->
+                    <Grid Name="BiLogSheetsView" Grid.Row="1" Visibility="Collapsed">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="10"/>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="10"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="*" MinHeight="200"/>
                         </Grid.RowDefinitions>
 
                         <Border Grid.Row="0" Background="White" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1" Padding="0,0,0,8">
-                            <DockPanel LastChildFill="True">
-                                <Image DockPanel.Dock="Left" Height="44" Width="Auto" Stretch="Uniform" StretchDirection="DownOnly"
-                                       Margin="0,0,14,0" VerticalAlignment="Center"
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock Text="Mediclinic Airport Road Hospital" FontWeight="SemiBold" Foreground="#0F172A"/>
+                                    <TextBlock Text="Central Supply Sterilization Department" Foreground="#334155" FontSize="11"/>
+                                </StackPanel>
+
+                                <TextBlock Grid.Column="2" Name="BiLogTitle" TextWrapping="Wrap" VerticalAlignment="Center"
+                                           FontSize="12" FontWeight="SemiBold" Foreground="#1a1a2e" TextAlignment="Center"
+                                           Text="STEAM STERILIZER PERIODIC QUALITY ASSURANCE — BIOLOGICAL INDICATOR TEST RESULT"/>
+
+                                <Image Grid.Column="4" Height="44" Width="Auto" Stretch="Uniform" StretchDirection="DownOnly"
+                                       VerticalAlignment="Center"
                                        Source="pack://application:,,,/logo.png"
                                        SnapsToDevicePixels="True"/>
-                                <TextBlock Name="BiLogTitle" TextWrapping="Wrap" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Foreground="#1a1a2e"
-                                           Text="STEAM STERILIZER PERIODIC QUALITY ASSURANCE — BIOLOGICAL INDICATOR TEST RESULT"/>
-                            </DockPanel>
+                            </Grid>
                         </Border>
 
                         <Border Grid.Row="2" Background="#F8FAFD" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="12,10">
                             <Grid>
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="14"/>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="14"/>
                                     <ColumnDefinition Width="Auto"/>
@@ -573,26 +850,68 @@
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="6">
+                                    <TextBlock Style="{StaticResource CaptionLabel}" Text="Quick range"/>
+                                    <ComboBox Name="BiQuickRangeCombo" MinWidth="160" IsEditable="False"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="8">
                                     <TextBlock Style="{StaticResource CaptionLabel}" Text="Search cycle no."/>
                                     <TextBox Name="BiCycleSearchText" />
                                 </StackPanel>
 
-                                <StackPanel Grid.Column="8" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                <StackPanel Grid.Column="10" Orientation="Horizontal" VerticalAlignment="Bottom">
                                     <Button Name="BiGoButton" Content="Go" Style="{StaticResource SuccessToolbarButton}" MinWidth="70" Margin="0,0,8,0"/>
                                     <Button Name="BiClearButton" Content="Clear" Style="{StaticResource SecondaryToolbarButton}" MinWidth="70"/>
                                 </StackPanel>
 
-                                <StackPanel Grid.Column="10" Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Right">
-                                    <Button Name="BiExportButton" Content="Export" Style="{StaticResource SecondaryToolbarButton}" MinWidth="80" Margin="0,0,8,0"/>
+                                <StackPanel Grid.Column="12" Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Right">
+                                    <Button Name="BiPreviewButton" Content="Preview" Style="{StaticResource SecondaryToolbarButton}" MinWidth="88" Margin="0,0,8,0"/>
+                                    <Button Name="BiExportPdfButton" Content="Export PDF" Style="{StaticResource SecondaryToolbarButton}" MinWidth="100" Margin="0,0,8,0"/>
                                     <Button Name="BiPrintButton" Content="Print" Style="{StaticResource SecondaryToolbarButton}" MinWidth="80"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
 
-                        <DataGrid Grid.Row="4" Name="BiLogGrid" Style="{StaticResource BiLogDataGrid}"
+                        <Border Grid.Row="4" Background="White" BorderBrush="#DCE4EE" BorderThickness="1" CornerRadius="8" Padding="10,8">
+                            <DockPanel LastChildFill="True">
+                                <StackPanel DockPanel.Dock="Left" Width="210" Margin="0,0,12,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Compliance &amp; Alerts" FontSize="12" FontWeight="SemiBold" Foreground="#111827"/>
+                                    <TextBlock Name="BiComplianceSummaryText" Text="Load BI log rows to view compliance signals."
+                                               FontSize="10.5" Foreground="{StaticResource BrushMuted}" Margin="0,2,0,0"
+                                               TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+
+                                <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                              VerticalScrollBarVisibility="Disabled"
+                                              CanContentScroll="False"
+                                              Padding="0,0,0,2">
+                                    <ItemsControl ItemsSource="{Binding BiComplianceAlerts}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="#FFF7ED" BorderBrush="#FDBA74" BorderThickness="1" CornerRadius="14"
+                                                        Padding="9,5" Margin="0,0,6,0" ToolTip="{Binding Detail}">
+                                                    <DockPanel LastChildFill="True">
+                                                        <Ellipse DockPanel.Dock="Left" Width="7" Height="7" Fill="#F97316" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="{Binding Title}" FontSize="11" FontWeight="SemiBold" Foreground="#7C2D12"
+                                                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" MaxWidth="170"/>
+                                                    </DockPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </DockPanel>
+                        </Border>
+
+                        <DataGrid Grid.Row="6" Name="BiLogGrid" Style="{StaticResource BiLogDataGrid}"
                                   MinWidth="1200"
-                                  MinHeight="260"
-                                  VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Auto"
+                                  MinHeight="180" VerticalAlignment="Stretch"
+                                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
                                   AutoGenerateColumns="False" IsReadOnly="False" CanUserAddRows="False"
                                   FrozenColumnCount="2"
                                   AlternationCount="2"
@@ -607,6 +926,13 @@
                                   HorizontalGridLinesBrush="#E6EEF7"
                                   VerticalGridLinesBrush="Transparent"
                                   BorderBrush="#DCE4EE" BorderThickness="1" Background="White">
+                            <DataGrid.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Preview BI log sheet" Click="BiLogPreview_OnClick"/>
+                                    <MenuItem Header="Print BI log sheet" Click="BiLogPrint_OnClick"/>
+                                    <MenuItem Header="Export (PDF)..." Click="BiLogExportPdf_OnClick"/>
+                                </ContextMenu>
+                            </DataGrid.ContextMenu>
                             <DataGrid.CellStyle>
                                 <Style TargetType="DataGridCell">
                                     <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -677,7 +1003,7 @@
                                         </DataTemplate>
                                     </DataGridTextColumn.HeaderTemplate>
                                 </DataGridTextColumn>
-                                <DataGridTemplateColumn Width="64" MinWidth="60">
+                                <DataGridTemplateColumn Width="62" MinWidth="58">
                                     <DataGridTemplateColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="Incubator temp&#x0a;(e.g. 60°C +12)" TextAlignment="Center" TextWrapping="Wrap" FontSize="8"/>
@@ -685,22 +1011,15 @@
                                     </DataGridTemplateColumn.HeaderTemplate>
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                <CheckBox IsChecked="{Binding BiIncubatorChecked}" VerticalAlignment="Center" Margin="0,0,4,0"
-                                                          ToolTipService.ToolTip="Incubator checked"/>
-                                                <TextBlock Text="{Binding BiIncubatorTemp}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                                            </StackPanel>
+                                            <CheckBox IsChecked="{Binding BiIncubatorChecked}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                      ToolTipService.ToolTip="Incubator checked"/>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                     <DataGridTemplateColumn.CellEditingTemplate>
                                         <DataTemplate>
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                <CheckBox IsChecked="{Binding BiIncubatorChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                          VerticalAlignment="Center" Margin="0,0,6,0"
-                                                          ToolTipService.ToolTip="Incubator checked"/>
-                                                <TextBox Text="{Binding BiIncubatorTemp, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                         Width="40" VerticalContentAlignment="Center"/>
-                                            </StackPanel>
+                                            <CheckBox IsChecked="{Binding BiIncubatorChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                      ToolTipService.ToolTip="Incubator checked"/>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellEditingTemplate>
                                 </DataGridTemplateColumn>
@@ -750,6 +1069,8 @@
                                                                                Style="{StaticResource BiLogMaskedTimeChrome}"
                                                                                ValueHm="{Binding BiTimeInTimeText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                                                                                IsTimeOut="False"
+                                                                               MouseEnter="BiLogTimeTextBox_OnMouseEnter"
+                                                                               GotKeyboardFocus="BiLogTimeTextBox_OnGotKeyboardFocus"
                                                                                ToolTipService.ToolTip="Digits only (e.g. 1830→18:30). Enter → next row."/>
                                                 </Grid>
                                             </Border>
@@ -805,6 +1126,8 @@
                                                                                ValueHm="{Binding BiTimeOutTimeText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                                                                                IsTimeOut="True"
                                                                                TabIndex="0"
+                                                                               MouseEnter="BiLogTimeTextBox_OnMouseEnter"
+                                                                               GotKeyboardFocus="BiLogTimeTextBox_OnGotKeyboardFocus"
                                                                                ToolTipService.ToolTip="Digits only. Enter → next row."/>
                                                 </Grid>
                                             </Border>
@@ -918,6 +1241,439 @@
                                 </DataGridTextColumn>
                             </DataGrid.Columns>
                         </DataGrid>
+                    </Grid>
+
+                    <!-- Analytics view -->
+                        <Grid Name="AnalyticsView" Grid.Row="1" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" Background="#F8FAFD" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="14"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="14"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="14"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Style="{StaticResource CaptionLabel}" Text="From (local)"/>
+                                    <DatePicker Name="AnalyticsFromDate" SelectedDateFormat="Short" Width="140"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Style="{StaticResource CaptionLabel}" Text="To (local)"/>
+                                    <DatePicker Name="AnalyticsToDate" SelectedDateFormat="Short" Width="140"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="4" Name="AnalyticsScopePanel" Visibility="Collapsed">
+                                    <TextBlock Style="{StaticResource CaptionLabel}" Text="Scope"/>
+                                    <ComboBox Name="AnalyticsScopeCombo" Width="170" IsEditable="False">
+                                        <ComboBoxItem Content="Overall (all users)" IsSelected="True"/>
+                                        <ComboBoxItem Content="Individual user"/>
+                                    </ComboBox>
+                                </StackPanel>
+                                <StackPanel Grid.Column="6" Name="AnalyticsUserPanel" Visibility="Collapsed">
+                                    <TextBlock Style="{StaticResource CaptionLabel}" Text="User"/>
+                                    <ComboBox Name="AnalyticsUserCombo" Width="220" IsEditable="False"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="8" Name="AnalyticsPresetPanel" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                    <ComboBox Name="AnalyticsPresetsCombo" Width="220" IsEditable="False" Margin="0,0,8,0"/>
+                                    <Button Name="AnalyticsPresetSaveButton" Content="Save" Style="{StaticResource SecondaryToolbarButton}" MinWidth="72" Margin="0,0,8,0"/>
+                                    <Button Name="AnalyticsPresetRenameButton" Content="Rename" Style="{StaticResource SecondaryToolbarButton}" MinWidth="80" Margin="0,0,8,0"/>
+                                    <Button Name="AnalyticsPresetDeleteButton" Content="Delete" Style="{StaticResource SecondaryToolbarButton}" MinWidth="80" Margin="0,0,8,0"/>
+                                    <Button Name="AnalyticsPresetSetDefaultButton" Content="Set default" Style="{StaticResource SecondaryToolbarButton}" MinWidth="100"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="10" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                    <Border Background="White" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="8" Padding="3" Margin="0,0,10,0"
+                                            VerticalAlignment="Bottom">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="View" FontSize="11" FontWeight="SemiBold" Foreground="#64748B"
+                                                       VerticalAlignment="Center" Margin="6,0,8,0"/>
+                                            <ToggleButton Name="AnalyticsPlainTextToggle"
+                                                          Content="Report"
+                                                          Style="{StaticResource AnalyticsReportToggle}"
+                                                          MinWidth="76"
+                                                          ToolTip="Switch between dashboard charts and a compact report view."/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Button Name="AnalyticsExportCsvButton" Content="Export CSV" Style="{StaticResource SecondaryToolbarButton}" MinWidth="100" Margin="8,0,0,0" VerticalAlignment="Bottom"/>
+                                    <Button Name="AnalyticsExportXlsxButton" Content="Export XLSX" Style="{StaticResource SecondaryToolbarButton}" MinWidth="110" Margin="8,0,0,0" VerticalAlignment="Bottom"/>
+                                    <Button Name="AnalyticsExportPdfButton" Content="Export PDF" Style="{StaticResource SecondaryToolbarButton}" MinWidth="100" Margin="8,0,0,0" VerticalAlignment="Bottom"/>
+                                    <Button Name="AnalyticsPrintButton" Content="Print" Style="{StaticResource SecondaryToolbarButton}" MinWidth="90" Margin="8,0,0,0" VerticalAlignment="Bottom"/>
+                                </StackPanel>
+                                <Button Grid.Column="12" Name="AnalyticsRefreshButton" Content="Refresh" Style="{StaticResource PrimaryButton}" MinWidth="110" VerticalAlignment="Bottom"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="2" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10" Padding="12,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Style="{StaticResource CaptionLabel}" Text="Sterilizer"/>
+                                    <ComboBox Name="AnalyticsFilterSterilizerCombo" Width="180" IsEditable="False"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Style="{StaticResource CaptionLabel}" Text="Status"/>
+                                    <ComboBox Name="AnalyticsFilterStatusCombo" Width="150" IsEditable="False"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="4">
+                                    <TextBlock Style="{StaticResource CaptionLabel}" Text="Implants"/>
+                                    <ComboBox Name="AnalyticsFilterImplantsCombo" Width="120" IsEditable="False"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="6">
+                                    <TextBlock Style="{StaticResource CaptionLabel}" Text="BI Result"/>
+                                    <ComboBox Name="AnalyticsFilterBiResultCombo" Width="140" IsEditable="False"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="8">
+                                    <TextBlock Style="{StaticResource CaptionLabel}" Text="Search"/>
+                                    <TextBox Name="AnalyticsFilterSearchTextBox" MinWidth="220"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="9" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                    <Button Name="AnalyticsFiltersResetButton" Content="Reset filters" Style="{StaticResource SecondaryToolbarButton}" MinWidth="110" Margin="0,0,8,0"/>
+                                    <Button Name="AnalyticsFiltersApplyButton" Content="Apply" Style="{StaticResource PrimaryButton}" MinWidth="90"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Plain text statistics -->
+                        <Border Grid.Row="4" Name="AnalyticsPlainTextPanel" Padding="0,8,0,0" Visibility="Collapsed">
+                            <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="12" Padding="18">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.08"/>
+                                </Border.Effect>
+                                <StackPanel>
+                                    <TextBlock Text="Statistics report" FontSize="16" FontWeight="SemiBold" Foreground="#0F172A"/>
+                                    <TextBlock Name="AnalyticsPlainRange" Margin="0,4,0,0" FontSize="12" Foreground="#64748B" Text="—"/>
+                                    <TextBlock Name="AnalyticsPlainSupplement" Margin="0,10,0,0" FontSize="11" Foreground="#64748B" TextWrapping="Wrap" Text=""/>
+                                    <Border Margin="0,12,0,0" Background="#FFF7ED" BorderBrush="#FDBA74" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                                        <StackPanel>
+                                            <TextBlock Text="BI log sheet (periodic QA — paper form fields on loads)" FontSize="12" FontWeight="SemiBold" Foreground="#9A3412"/>
+                                            <TextBlock Name="AnalyticsPlainBiPaperDetailText" Margin="0,4,0,0" FontSize="11" Foreground="#C2410C" TextWrapping="Wrap" Text="—"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Margin="0,12,0,0" Height="1" Background="#EEF2F7"/>
+
+                                    <Grid Margin="0,14,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="12"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="12"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Key totals -->
+                                        <Border Grid.Column="0" Grid.Row="0" Background="#F8FAFD" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="12" Padding="14">
+                                            <StackPanel>
+                                                <TextBlock Text="Key totals" FontWeight="SemiBold" Foreground="#111827" FontSize="13"/>
+                                                <Grid Margin="0,10,0,0">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="14"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0">
+                                                        <TextBlock Text="Total loads" Foreground="#64748B" FontSize="11"/>
+                                                        <TextBlock Name="AnalyticsPlainTotalLoads" FontSize="18" FontWeight="SemiBold" Foreground="#0F172A" Text="0"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="2">
+                                                        <TextBlock Text="Total pcs / qty" Foreground="#64748B" FontSize="11"/>
+                                                        <TextBlock Name="AnalyticsPlainPcsQty" FontSize="18" FontWeight="SemiBold" Foreground="#0F172A" Text="0 / 0"/>
+                                                    </StackPanel>
+                                                </Grid>
+
+                                                <Grid Margin="0,10,0,0">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="12"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="12"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0">
+                                                        <TextBlock Text="Completed" Foreground="#64748B" FontSize="11"/>
+                                                        <TextBlock Name="AnalyticsPlainCompleted" FontSize="16" FontWeight="SemiBold" Foreground="#10B981" Text="0"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="2">
+                                                        <TextBlock Text="Draft" Foreground="#64748B" FontSize="11"/>
+                                                        <TextBlock Name="AnalyticsPlainDraft" FontSize="16" FontWeight="SemiBold" Foreground="#F59E0B" Text="0"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="4">
+                                                        <TextBlock Text="Voided" Foreground="#64748B" FontSize="11"/>
+                                                        <TextBlock Name="AnalyticsPlainVoided" FontSize="16" FontWeight="SemiBold" Foreground="#EF4444" Text="0"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- Top operators -->
+                                        <Border Grid.Column="2" Grid.Row="0" Background="#F8FAFD" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="12" Padding="14">
+                                            <StackPanel>
+                                                <TextBlock Text="Top operators" FontWeight="SemiBold" Foreground="#111827" FontSize="13"/>
+                                                <DataGrid Name="AnalyticsPlainTopOperatorsGrid" Margin="0,10,0,0"
+                                                          AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                                                          IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                                                          AlternationCount="2" RowHeight="28"
+                                                          BorderBrush="#DCE4EE" BorderThickness="1" Background="White">
+                                                    <DataGrid.RowStyle>
+                                                        <Style TargetType="DataGridRow">
+                                                            <Setter Property="Background" Value="White"/>
+                                                            <Style.Triggers>
+                                                                <Trigger Property="AlternationIndex" Value="1">
+                                                                    <Setter Property="Background" Value="#FBFDFF"/>
+                                                                </Trigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </DataGrid.RowStyle>
+                                                    <DataGrid.Columns>
+                                                        <DataGridTextColumn Header="#" Binding="{Binding Rank}" Width="40" IsReadOnly="True"/>
+                                                        <DataGridTextColumn Header="Operator" Binding="{Binding Name}" Width="2*"/>
+                                                        <DataGridTextColumn Header="Loads" Binding="{Binding Loads}" Width="*" IsReadOnly="True"/>
+                                                        <DataGridTextColumn Header="Pcs" Binding="{Binding Pcs}" Width="*" IsReadOnly="True"/>
+                                                        <DataGridTextColumn Header="Qty" Binding="{Binding Qty}" Width="*" IsReadOnly="True"/>
+                                                    </DataGrid.Columns>
+                                                </DataGrid>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- Top sterilizers -->
+                                        <Border Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="3" Background="#F8FAFD" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="12" Padding="14">
+                                            <StackPanel>
+                                                <TextBlock Text="Top sterilizers" FontWeight="SemiBold" Foreground="#111827" FontSize="13"/>
+                                                <DataGrid Name="AnalyticsPlainTopSterilizersGrid" Margin="0,10,0,0"
+                                                          AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                                                          IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                                                          AlternationCount="2" RowHeight="28"
+                                                          BorderBrush="#DCE4EE" BorderThickness="1" Background="White">
+                                                    <DataGrid.RowStyle>
+                                                        <Style TargetType="DataGridRow">
+                                                            <Setter Property="Background" Value="White"/>
+                                                            <Style.Triggers>
+                                                                <Trigger Property="AlternationIndex" Value="1">
+                                                                    <Setter Property="Background" Value="#FBFDFF"/>
+                                                                </Trigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </DataGrid.RowStyle>
+                                                    <DataGrid.Columns>
+                                                        <DataGridTextColumn Header="#" Binding="{Binding Rank}" Width="40" IsReadOnly="True"/>
+                                                        <DataGridTextColumn Header="Sterilizer" Binding="{Binding Name}" Width="2*"/>
+                                                        <DataGridTextColumn Header="Loads" Binding="{Binding Loads}" Width="*" IsReadOnly="True"/>
+                                                        <DataGridTextColumn Header="Pcs" Binding="{Binding Pcs}" Width="*" IsReadOnly="True"/>
+                                                        <DataGridTextColumn Header="Qty" Binding="{Binding Qty}" Width="*" IsReadOnly="True"/>
+                                                    </DataGrid.Columns>
+                                                </DataGrid>
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+
+                                    <Border Margin="0,14,0,0" Background="#F8FAFD" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="12" Padding="14">
+                                        <StackPanel>
+                                            <TextBlock Text="Breakdown" FontWeight="SemiBold" Foreground="#111827" FontSize="13"/>
+                                            <TextBlock Text="Double-click a row to open a drill-down window filtered by this breakdown." FontSize="10" Foreground="#6B7280" Margin="0,2,0,10"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                                <TextBlock Text="View" VerticalAlignment="Center" Margin="0,0,8,0" FontSize="12" Foreground="#374151"/>
+                                                <ComboBox Name="AnalyticsPlainBreakdownCombo" Width="260" IsEditable="False" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <DataGrid Name="AnalyticsPlainBreakdownGrid" Height="220" AutoGenerateColumns="False"
+                                                      CanUserAddRows="False" CanUserDeleteRows="False"
+                                                      HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                                                      SelectionMode="Single" IsReadOnly="True"/>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                        </Border>
+
+                        <!-- Dashboard layout -->
+                        <Border Grid.Row="6" Name="AnalyticsDashboardPanel" Padding="0,8,0,0" HorizontalAlignment="Stretch">
+                            <StackPanel HorizontalAlignment="Stretch">
+                            <StackPanel>
+                                <TextBlock Text="Analytics Dashboard" FontSize="18" FontWeight="SemiBold" Foreground="#111827"/>
+                                <TextBlock Name="AnalyticsHeaderRangeText" Margin="0,2,0,0" FontSize="11" Foreground="#6B7280" Text="—"/>
+                                <TextBlock Name="AnalyticsCompareText" Margin="0,6,0,0" FontSize="11" Foreground="#475569" TextWrapping="Wrap" Text=""/>
+                            </StackPanel>
+
+                            <Grid Margin="0,12,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                                    <StackPanel>
+                                        <TextBlock Text="QA tests (in range)" FontSize="12" FontWeight="SemiBold" Foreground="#14532D"/>
+                                        <TextBlock Name="AnalyticsQaSummaryText" Margin="0,4,0,0" FontSize="11" Foreground="#166534" TextWrapping="Wrap" Text="—"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="2" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                                    <StackPanel>
+                                        <TextBlock Text="Instrument checks (in range)" FontSize="12" FontWeight="SemiBold" Foreground="#1E3A8A"/>
+                                        <TextBlock Name="AnalyticsInstrumentSummaryText" Margin="0,4,0,0" FontSize="11" Foreground="#1D4ED8" TextWrapping="Wrap" Text="—"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <Border Margin="0,12,0,0" Background="#FFF7ED" BorderBrush="#FDBA74" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                                <StackPanel>
+                                    <TextBlock Text="BI log sheet (periodic QA — paper form fields on loads)" FontSize="12" FontWeight="SemiBold" Foreground="#9A3412"/>
+                                    <TextBlock Name="AnalyticsBiPaperDetailText" Margin="0,4,0,0" FontSize="11" Foreground="#C2410C" TextWrapping="Wrap" Text="—"/>
+                                </StackPanel>
+                            </Border>
+                            
+                            <Border Margin="0,12,0,0" Background="#F8FAFD" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                                <StackPanel>
+                                    <TextBlock Text="BI log analytics (structured)" FontSize="12" FontWeight="SemiBold" Foreground="#0F172A"/>
+                                    <TextBlock Name="AnalyticsBiLogSummaryText" Margin="0,4,0,0" FontSize="11" Foreground="#334155" TextWrapping="Wrap" Text="—"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- KPI cards -->
+                            <UniformGrid Margin="0,10,0,0" Columns="6" HorizontalAlignment="Stretch">
+                                <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10" Padding="10" Margin="0,0,10,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Total Loads" FontSize="11" Foreground="#6B7280" Margin="0,0,0,4"/>
+                                        <TextBlock Name="AnalyticsTotalText" FontSize="18" FontWeight="SemiBold" Foreground="#0EA5E9" Text="0"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10" Padding="10" Margin="0,0,10,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Completed" FontSize="11" Foreground="#6B7280" Margin="0,0,0,4"/>
+                                        <TextBlock Name="AnalyticsCompletedText" FontSize="18" FontWeight="SemiBold" Foreground="#10B981" Text="0"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10" Padding="10" Margin="0,0,10,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Draft" FontSize="11" Foreground="#6B7280" Margin="0,0,0,4"/>
+                                        <TextBlock Name="AnalyticsDraftText" FontSize="18" FontWeight="SemiBold" Foreground="#F59E0B" Text="0"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10" Padding="10" Margin="0,0,10,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Voided" FontSize="11" Foreground="#6B7280" Margin="0,0,0,4"/>
+                                        <TextBlock Name="AnalyticsVoidedText" FontSize="18" FontWeight="SemiBold" Foreground="#EF4444" Text="0"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10" Padding="10" Margin="0,0,10,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Total Pcs" FontSize="11" Foreground="#6B7280" Margin="0,0,0,4"/>
+                                        <TextBlock Name="AnalyticsPcsText" FontSize="18" FontWeight="SemiBold" Foreground="#8B5CF6" Text="0"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10" Padding="10">
+                                    <StackPanel>
+                                        <TextBlock Text="Total Qty" FontSize="11" Foreground="#6B7280" Margin="0,0,0,4"/>
+                                        <TextBlock Name="AnalyticsQtyText" FontSize="18" FontWeight="SemiBold" Foreground="#14B8A6" Text="0"/>
+                                    </StackPanel>
+                                </Border>
+                            </UniformGrid>
+
+                            <!-- Row: Top Operators + Load Distribution -->
+                            <Grid Margin="0,16,0,0" HorizontalAlignment="Stretch">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10" Padding="16" HorizontalAlignment="Stretch">
+                                    <StackPanel>
+                                    <TextBlock Text="Top Operators" FontSize="14" FontWeight="SemiBold" Foreground="#111827"/>
+                                        <TextBlock Text="Loads, pieces, quantities (click a bar to drill down)" FontSize="10" Foreground="#6B7280" Margin="0,2,0,8"/>
+                                        <lvc:CartesianChart Name="AnalyticsTopOperatorsChart" Height="250" ZoomMode="None" Background="Transparent"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Grid.Column="2" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10" Padding="16" HorizontalAlignment="Stretch">
+                                    <StackPanel>
+                                        <TextBlock Text="Load Distribution" FontSize="14" FontWeight="SemiBold" Foreground="#111827"/>
+                                        <TextBlock Name="AnalyticsLoadDistributionSubtitle" Text="Status breakdown (click a slice to drill down)" FontSize="10" Foreground="#6B7280" Margin="0,2,0,8"/>
+                                        <lvc:PieChart Name="AnalyticsLoadDistributionPie" Height="250" Background="Transparent"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!-- Top Sterilizers Performance -->
+                            <Border Margin="0,16,0,0" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10" Padding="16" HorizontalAlignment="Stretch">
+                                <StackPanel>
+                                    <TextBlock Text="Top Sterilizers Performance" FontSize="14" FontWeight="SemiBold" Foreground="#111827"/>
+                                    <TextBlock Text="Loads, pieces, quantities (click a bar to drill down)" FontSize="10" Foreground="#6B7280" Margin="0,2,0,8"/>
+                                    <lvc:CartesianChart Name="AnalyticsTopSterilizersChart" Height="300" ZoomMode="None" Background="Transparent"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Daily trend -->
+                            <Border Margin="0,16,0,0" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10" Padding="16" HorizontalAlignment="Stretch">
+                                <StackPanel>
+                                    <TextBlock Text="Daily activity" FontSize="14" FontWeight="SemiBold" Foreground="#111827"/>
+                                    <TextBlock Text="By calendar day — local (click a point to drill down for that day)" FontSize="10" Foreground="#6B7280" Margin="0,2,0,8"/>
+                                    <lvc:CartesianChart Name="AnalyticsDailyTrendChart" Height="280" ZoomMode="None" Background="Transparent"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Margin="0,16,0,0" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10" Padding="16" HorizontalAlignment="Stretch">
+                                <StackPanel>
+                                    <TextBlock Text="BI trends (pass/fail/pending/missing)" FontSize="14" FontWeight="SemiBold" Foreground="#111827"/>
+                                    <TextBlock Text="Click a point to drill down for that day" FontSize="10" Foreground="#6B7280" Margin="0,2,0,8"/>
+                                    <lvc:CartesianChart Name="AnalyticsBiTrendChart" Height="260" ZoomMode="None" Background="Transparent"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Top operators snapshot (not time series) -->
+                            <Border Margin="0,16,0,0" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10" Padding="16" HorizontalAlignment="Stretch">
+                                <StackPanel>
+                                    <TextBlock Text="Top operators — quantity snapshot" FontSize="14" FontWeight="SemiBold" Foreground="#111827"/>
+                                    <TextBlock Text="Up to three operators by quantity — click a point to drill down" FontSize="10" Foreground="#6B7280" Margin="0,2,0,8"/>
+                                    <lvc:CartesianChart Name="AnalyticsOperatorSnapshotChart" Height="220" ZoomMode="None" Background="Transparent"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Breakdown drill-down -->
+                            <Border Margin="0,16,0,0" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="10" Padding="16" HorizontalAlignment="Stretch">
+                                <StackPanel>
+                                    <TextBlock Text="Breakdown" FontSize="14" FontWeight="SemiBold" Foreground="#111827"/>
+                                    <TextBlock Text="Double-click a row, or click chart bars/points/slices, to open a drill-down window with exact structured filters." FontSize="10" Foreground="#6B7280" Margin="0,2,0,10"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                        <TextBlock Text="View" VerticalAlignment="Center" Margin="0,0,8,0" FontSize="12" Foreground="#374151"/>
+                                        <ComboBox Name="AnalyticsBreakdownCombo" Width="220" IsEditable="False" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <DataGrid Name="AnalyticsBreakdownGrid" Height="220" AutoGenerateColumns="False"
+                                              CanUserAddRows="False" CanUserDeleteRows="False"
+                                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                                              SelectionMode="Single" IsReadOnly="True"/>
+                                </StackPanel>
+                            </Border>
+                            </StackPanel>
+                        </Border>
                     </Grid>
                 </Grid>
                 </ScrollViewer>

@@ -23,10 +23,37 @@
                 <TextBox Name="UsernameBox"/>
 
                 <TextBlock Style="{StaticResource CaptionLabel}" Text="Password * (min 8 characters)" Margin="0,10,0,0"/>
-                <PasswordBox Name="PasswordBox"/>
+                <Grid>
+                    <PasswordBox x:Name="PasswordBox"/>
+                    <TextBox x:Name="PasswordPlainBox" Visibility="Collapsed" TextChanged="PasswordPlainBox_OnTextChanged"/>
+                </Grid>
 
                 <TextBlock Style="{StaticResource CaptionLabel}" Text="Confirm password *" Margin="0,10,0,0"/>
-                <PasswordBox Name="ConfirmPasswordBox"/>
+                <Grid>
+                    <PasswordBox x:Name="ConfirmPasswordBox"/>
+                    <TextBox x:Name="ConfirmPasswordPlainBox" Visibility="Collapsed" TextChanged="ConfirmPasswordPlainBox_OnTextChanged"/>
+                </Grid>
+
+                <CheckBox x:Name="ShowPasswordCheckBox"
+                          Content="Show password"
+                          FontSize="13"
+                          Foreground="{StaticResource BrushMuted}"
+                          Margin="0,8,0,0"
+                          Checked="ShowPasswordCheckBox_OnCheckedChanged"
+                          Unchecked="ShowPasswordCheckBox_OnCheckedChanged"/>
+
+                <TextBlock x:Name="CapsLockText"
+                           Margin="0,6,0,0"
+                           Foreground="{StaticResource BrushDanger}"
+                           Text="Caps Lock is ON"
+                           Visibility="Collapsed"
+                           FontSize="12"/>
+                <TextBlock x:Name="PasswordStatusText"
+                           Margin="0,4,0,0"
+                           Foreground="{StaticResource BrushMuted}"
+                           Text="Use at least 8 characters. Make sure both passwords match."
+                           TextWrapping="Wrap"
+                           FontSize="12"/>
 
                 <TextBlock Style="{StaticResource CaptionLabel}" Text="First name *" Margin="0,10,0,0"/>
                 <TextBox Name="FirstNameBox"/>

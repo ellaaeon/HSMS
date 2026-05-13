@@ -11,7 +11,7 @@ using HSMS.Shared.Contracts;
 namespace HSMS.Desktop.Controls;
 
 /// <summary>Fixed four-slot (H1 H2 M1 M2) 24-hour time entry; formatting on blur only.</summary>
-public sealed class BiMasked24hTimeTextBox : TextBox
+public class BiMasked24hTimeTextBox : TextBox
 {
     public static readonly DependencyProperty ValueHmProperty = DependencyProperty.Register(
         nameof(ValueHm),
@@ -24,6 +24,13 @@ public sealed class BiMasked24hTimeTextBox : TextBox
 
     public static readonly DependencyProperty IsTimeOutProperty = DependencyProperty.Register(
         nameof(IsTimeOut),
+        typeof(bool),
+        typeof(BiMasked24hTimeTextBox),
+        new PropertyMetadata(false));
+
+    /// <summary>When true, Up/Down adjust hours or minutes (by caret segment); PageUp/PageDown do not bubble to parent scrollers.</summary>
+    public static readonly DependencyProperty CycleEndArrowAdjustmentEnabledProperty = DependencyProperty.Register(
+        nameof(CycleEndArrowAdjustmentEnabled),
         typeof(bool),
         typeof(BiMasked24hTimeTextBox),
         new PropertyMetadata(false));
@@ -66,6 +73,12 @@ public sealed class BiMasked24hTimeTextBox : TextBox
     {
         get => (bool)GetValue(IsTimeOutProperty);
         set => SetValue(IsTimeOutProperty, value);
+    }
+
+    public bool CycleEndArrowAdjustmentEnabled
+    {
+        get => (bool)GetValue(CycleEndArrowAdjustmentEnabledProperty);
+        set => SetValue(CycleEndArrowAdjustmentEnabledProperty, value);
     }
 
     /// <summary>Blur-commit mask digits and push <see cref="ValueHm"/> to the source (DataGrid may end the cell before LostFocus).</summary>
@@ -119,7 +132,7 @@ public sealed class BiMasked24hTimeTextBox : TextBox
                     return;
                 }
 
-                var mapped = BiLogMaskedTimeDigits.DigitInsertFromMaskCaret(Text, caretAtClick);
+                var mapped = SlotIndexFromCaretPosition(Text, caretAtClick);
                 _cursorSlot = ClampCursor(mapped);
                 RefreshText();
             },
@@ -130,7 +143,7 @@ public sealed class BiMasked24hTimeTextBox : TextBox
     {
         base.OnLostKeyboardFocus(e);
         FinalizeForBinding();
-        TryClearLegacyDropdownFields();
+        ClearLegacyCompanionFields();
         UpdateValidationChrome();
     }
 
@@ -138,6 +151,12 @@ public sealed class BiMasked24hTimeTextBox : TextBox
     {
         if (AppendDigit(e)) return;
         if (HandleBackspace(e)) return;
+        if (CycleEndArrowAdjustmentEnabled)
+        {
+            if (HandleArrowIncrement(e)) return;
+            if (SuppressPagingKeys(e)) return;
+        }
+
         if (HandleCaretMove(e)) return;
         if (HandleEnter(e)) return;
 
@@ -148,6 +167,128 @@ public sealed class BiMasked24hTimeTextBox : TextBox
         }
 
         base.OnPreviewKeyDown(e);
+    }
+
+    private bool HandleArrowIncrement(KeyEventArgs e)
+    {
+        if (e.Key is not (Key.Up or Key.Down) || Keyboard.Modifiers != ModifierKeys.None)
+        {
+            return false;
+        }
+
+        _mouseCaretSyncGeneration++;
+        e.Handled = true;
+        var delta = e.Key == Key.Up ? 1 : -1;
+
+        var totalMin = TryGetCurrentMinutesFromSlots(out var parsed) ? parsed : 0;
+        var segment = Math.Clamp(_cursorSlot >= 4 ? 3 : _cursorSlot, 0, 3);
+        if (segment <= 1)
+        {
+            totalMin += delta * 60;
+        }
+        else
+        {
+            totalMin += delta;
+        }
+
+        while (totalMin < 0)
+        {
+            totalMin += 24 * 60;
+        }
+
+        totalMin %= 24 * 60;
+
+        ApplyMinutesToSlots(totalMin);
+        _cursorSegmentAfterArrow(segment);
+        RefreshText();
+        UpdateValidationChrome();
+        return true;
+    }
+
+    private void _cursorSegmentAfterArrow(int segment)
+    {
+        _cursorSlot = segment switch
+        {
+            0 or 1 => 1,
+            _ => 3
+        };
+    }
+
+    private static bool SuppressPagingKeys(KeyEventArgs e)
+    {
+        if (Keyboard.Modifiers != ModifierKeys.None)
+        {
+            return false;
+        }
+
+        if (e.Key is not (Key.PageUp or Key.PageDown))
+        {
+            return false;
+        }
+
+        e.Handled = true;
+        return true;
+    }
+
+    private bool TryGetCurrentMinutesFromSlots(out int totalMin)
+    {
+        totalMin = 0;
+        if (BiLogMaskedTimeDigits.AllSlotsEmpty(_slots))
+        {
+            return false;
+        }
+
+        if (BiLogMaskedTimeDigits.TryParseCompleteHmFromSlots(_slots, out var hh, out var mm))
+        {
+            totalMin = hh * 60 + mm;
+            return true;
+        }
+
+        if (BiLogMaskedTimeDigits.TryBlurCommit(_slots, out var hm) && hm is { Length: > 0 } s)
+        {
+            var parts = s.Split(':');
+            if (parts.Length == 2 &&
+                int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var h2) &&
+                int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var m2) &&
+                h2 is >= 0 and <= 23 &&
+                m2 is >= 0 and <= 59)
+            {
+                totalMin = h2 * 60 + m2;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void ApplyMinutesToSlots(int totalMin)
+    {
+        var hh = totalMin / 60;
+        var mm = totalMin % 60;
+        _slots[0] = (char)('0' + hh / 10);
+        _slots[1] = (char)('0' + hh % 10);
+        _slots[2] = (char)('0' + mm / 10);
+        _slots[3] = (char)('0' + mm % 10);
+    }
+
+    /// <summary>BI log clears parallel hour/minute combo fields; other hosts override as no-op.</summary>
+    protected virtual void ClearLegacyCompanionFields()
+    {
+        if (DataContext is not BiLogSheetRowDto row)
+        {
+            return;
+        }
+
+        if (IsTimeOut)
+        {
+            row.BiTimeOutHour = "";
+            row.BiTimeOutMinute = "";
+        }
+        else
+        {
+            row.BiTimeInHour = "";
+            row.BiTimeInMinute = "";
+        }
     }
 
     private static bool IsNavigationSteal(Key key) =>
@@ -306,10 +447,20 @@ public sealed class BiMasked24hTimeTextBox : TextBox
 
     private void RefreshText()
     {
-        var masked = BiLogMaskedTimeDigits.FormatMaskDisplay(_slots);
-        Text = masked;
-        CaretIndex = BiLogMaskedTimeDigits.MaskCaretIndex(masked, _cursorSlot);
+        var display = FormatSlotsForUi(_slots);
+        Text = display;
+        CaretIndex = CaretIndexFromSlotDisplay(display, _cursorSlot);
     }
+
+    /// <summary>BI sheets use bracketed mask; derived types can switch to plain <c>__:__</c>.</summary>
+    protected virtual string FormatSlotsForUi(ReadOnlySpan<char> slots) =>
+        BiLogMaskedTimeDigits.FormatMaskDisplay(slots);
+
+    protected virtual int CaretIndexFromSlotDisplay(string display, int slotIndex) =>
+        BiLogMaskedTimeDigits.MaskCaretIndex(display, slotIndex);
+
+    protected virtual int SlotIndexFromCaretPosition(string display, int caretIdx) =>
+        BiLogMaskedTimeDigits.DigitInsertFromMaskCaret(display, caretIdx);
 
     private void FinalizeForBinding()
     {
@@ -333,25 +484,6 @@ public sealed class BiMasked24hTimeTextBox : TextBox
         else if (!_suppressDpSync)
         {
             ValueHm = "";
-        }
-    }
-
-    private void TryClearLegacyDropdownFields()
-    {
-        if (DataContext is not BiLogSheetRowDto row)
-        {
-            return;
-        }
-
-        if (IsTimeOut)
-        {
-            row.BiTimeOutHour = "";
-            row.BiTimeOutMinute = "";
-        }
-        else
-        {
-            row.BiTimeInHour = "";
-            row.BiTimeInMinute = "";
         }
     }
 
@@ -549,11 +681,86 @@ public static class BiLogMaskedTimeDigits
         return false;
     }
 
-    public static string FormatMaskDisplay(ReadOnlySpan<char> slots)
+    /// <summary>No brackets — reads like a normal 24-hour time placeholder in grids.</summary>
+    public static string FormatPlainHmMask(ReadOnlySpan<char> slots)
     {
         static char Disp(char x) => IsEmptySlot(x) ? '_' : x;
-        var inner = $"{Disp(slots[0])}{Disp(slots[1])}:{Disp(slots[2])}{Disp(slots[3])}";
-        return $"[ {inner} ]";
+        return $"{Disp(slots[0])}{Disp(slots[1])}:{Disp(slots[2])}{Disp(slots[3])}";
+    }
+
+    public static string FormatMaskDisplay(ReadOnlySpan<char> slots) => $"[ {FormatPlainHmMask(slots)} ]";
+
+    /// <summary>Caret positions for <see cref="FormatPlainHmMask"/> (length 5: <c>__.__</c>).</summary>
+    public static int PlainMaskCaretIndex(string masked, int slotIndex)
+    {
+        if (string.IsNullOrEmpty(masked))
+        {
+            return 0;
+        }
+
+        var colon = masked.IndexOf(':');
+        if (colon <= 0)
+        {
+            return 0;
+        }
+
+        ReadOnlySpan<int> off = stackalloc int[] { 0, 1, colon + 1, colon + 2 };
+
+        var clamped = Math.Clamp(slotIndex, 0, 4);
+        if (clamped >= 4)
+        {
+            return masked.Length;
+        }
+
+        var i = off[clamped];
+        return Math.Clamp(i, 0, Math.Max(0, masked.Length - 1));
+    }
+
+    /// <summary>Maps caret position in plain mask to digit slot.</summary>
+    public static int DigitInsertFromPlainMaskCaret(string masked, int caretIdx)
+    {
+        if (string.IsNullOrEmpty(masked))
+        {
+            return 0;
+        }
+
+        var colonIdx = masked.IndexOf(':');
+        if (colonIdx < 1)
+        {
+            return 0;
+        }
+
+        var c = Math.Clamp(caretIdx, 0, masked.Length);
+
+        ReadOnlySpan<int> digitPos =
+        [
+            colonIdx - 2,
+            colonIdx - 1,
+            colonIdx + 1,
+            colonIdx + 2
+        ];
+
+        if (c <= digitPos[0])
+        {
+            return 0;
+        }
+
+        if (c <= digitPos[1])
+        {
+            return 1;
+        }
+
+        if (c <= digitPos[2])
+        {
+            return 2;
+        }
+
+        if (c <= digitPos[3])
+        {
+            return 3;
+        }
+
+        return 4;
     }
 
     /// <summary>Maps a character offset in the mask to slot index 0–4 from click / CaretIndex.</summary>

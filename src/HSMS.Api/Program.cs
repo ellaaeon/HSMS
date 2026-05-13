@@ -6,7 +6,12 @@ using HSMS.Persistence.Entities;
 using HSMS.Persistence.Services;
 using HSMS.Api.Infrastructure.Auth;
 using HSMS.Api.Infrastructure.Files;
+using HSMS.Api.Infrastructure.Maintenance;
 using HSMS.Api.Infrastructure.Security;
+using HSMS.Api.Reporting;
+using HSMS.Application.Exports;
+using HSMS.Application.Reporting;
+using HSMS.Application.Reporting.Builders;
 using HSMS.Application.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -19,10 +24,30 @@ builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection(Stor
 
 builder.Services.AddDbContext<HsmsDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer")));
+builder.Services.AddDbContextFactory<HsmsDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer")));
 
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserAccessor, HttpContextCurrentUserAccessor>();
+
+// Module 1 - Reporting + Printing pipeline.
+builder.Services.AddSingleton<IReportRenderEngine, QuestPdfReportRenderEngine>();
+builder.Services.AddScoped<IReceiptImageProvider, ApiReceiptImageProvider>();
+builder.Services.AddScoped<IReportManager, ReportManager>();
+
+// Module 2 - Receipt derivation pipeline.
+builder.Services.AddSingleton<ReceiptDerivationQueue>();
+builder.Services.AddScoped<IReceiptDerivationService, ReceiptDerivationService>();
+builder.Services.AddHostedService<ReceiptDerivationHostedService>();
+
+// Module 7 - Reusable Excel export service (used by API and Desktop).
+builder.Services.AddSingleton<IExcelExportService, ClosedXmlExcelExportService>();
+
+// Module 8 - Operations hardening: scheduled reconciliation + cleanup.
+builder.Services.Configure<MaintenanceOptions>(builder.Configuration.GetSection(MaintenanceOptions.SectionName));
+builder.Services.AddScoped<IReceiptReconciliationService, ReceiptReconciliationService>();
+builder.Services.AddHostedService<MaintenanceHostedService>();
 
 builder.Services.AddControllers()
     .AddJsonOptions(o =>

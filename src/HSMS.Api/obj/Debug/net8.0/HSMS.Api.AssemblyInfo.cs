@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HSMS.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+00900c7b318affe9a0b0c531c2b0879547037e67")]
 [assembly: System.Reflection.AssemblyProductAttribute("HSMS.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HSMS.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

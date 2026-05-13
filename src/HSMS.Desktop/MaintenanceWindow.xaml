@@ -98,7 +98,7 @@
                     </Grid.RowDefinitions>
 
                     <Border Grid.Row="0" HorizontalAlignment="Stretch" Background="#F8FAFD" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="14,10">
-                        <TextBlock Text="Tip: select a row and edit fields directly. Model is free text (no preset list). Use Purchase Date format yyyy-MM-dd."
+                        <TextBlock Text="Tip: select row(s) and edit directly (Ctrl+click / Shift+click for multiple). Model is free text. Purchase date: yyyy-MM-dd. Delete removes all selected rows."
                                    Foreground="{StaticResource BrushMuted}" FontSize="12" TextWrapping="Wrap"/>
                     </Border>
 
@@ -106,6 +106,8 @@
                         <DataGrid Name="SterilizersGrid"
                                   AutoGenerateColumns="False"
                                   CanUserAddRows="False"
+                                  SelectionMode="Extended"
+                                  SelectionUnit="FullRow"
                                   HorizontalAlignment="Stretch"
                                   HorizontalScrollBarVisibility="Auto">
                             <DataGrid.Columns>
@@ -113,6 +115,8 @@
                                 <DataGridTextColumn Header="Sterilizer No" Binding="{Binding SterilizerNo, UpdateSourceTrigger=PropertyChanged}" Width="140"/>
                                 <DataGridTextColumn Header="Model" Binding="{Binding Model, UpdateSourceTrigger=PropertyChanged}" MinWidth="140" Width="*"/>
                                 <DataGridTextColumn Header="Manufacturer" Binding="{Binding Manufacturer, UpdateSourceTrigger=PropertyChanged}" MinWidth="160" Width="*"/>
+                                <DataGridTextColumn Header="Serial No" Binding="{Binding SerialNumber, UpdateSourceTrigger=PropertyChanged}" MinWidth="120" Width="*"/>
+                                <DataGridTextColumn Header="Maintenance" Binding="{Binding MaintenanceSchedule, UpdateSourceTrigger=PropertyChanged}" MinWidth="140" Width="*"/>
                                 <DataGridTemplateColumn Header="Purchase Date" Width="150" IsReadOnly="False">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
@@ -153,12 +157,13 @@
                     </Grid.RowDefinitions>
 
                     <Border Grid.Row="0" HorizontalAlignment="Stretch" Background="#F8FAFD" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="14,10">
-                        <TextBlock Text="Department names here are used in Register Load dropdowns."
+                        <TextBlock Text="Department names here are used in Register Load dropdowns. Ctrl+click or Shift+click to select multiple rows; Delete removes all selected."
                                    Foreground="{StaticResource BrushMuted}" FontSize="12"/>
                     </Border>
 
                     <Border Grid.Row="2" HorizontalAlignment="Stretch" Background="White" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="10">
-                        <DataGrid Name="DepartmentsGrid" AutoGenerateColumns="False" CanUserAddRows="False">
+                        <DataGrid Name="DepartmentsGrid" AutoGenerateColumns="False" CanUserAddRows="False"
+                                  SelectionMode="Extended" SelectionUnit="FullRow">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="ID" Binding="{Binding DepartmentId, Converter={StaticResource ZeroIdToEmptyStringConverter}}" IsReadOnly="True" Width="70"/>
                                 <DataGridTextColumn Header="Department" Binding="{Binding DepartmentName, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
@@ -186,12 +191,13 @@
                     </Grid.RowDefinitions>
 
                     <Border Grid.Row="0" HorizontalAlignment="Stretch" Background="#F8FAFD" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="14,10">
-                        <TextBlock Text="Department items feed Item Description choices in Register Load."
+                        <TextBlock Text="Department items feed Item Description choices in Register Load. Ctrl+click or Shift+click to select multiple; Delete removes all selected."
                                    Foreground="{StaticResource BrushMuted}" FontSize="12"/>
                     </Border>
 
                     <Border Grid.Row="2" HorizontalAlignment="Stretch" Background="White" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="10">
-                        <DataGrid Name="DepartmentItemsGrid" AutoGenerateColumns="False" CanUserAddRows="False">
+                        <DataGrid Name="DepartmentItemsGrid" AutoGenerateColumns="False" CanUserAddRows="False"
+                                  SelectionMode="Extended" SelectionUnit="FullRow">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="ID" Binding="{Binding DeptItemId, Converter={StaticResource ZeroIdToEmptyStringConverter}}" IsReadOnly="True" Width="70"/>
                                 <DataGridComboBoxColumn Header="Department"
@@ -226,12 +232,13 @@
                     </Grid.RowDefinitions>
 
                     <Border Grid.Row="0" HorizontalAlignment="Stretch" Background="#F8FAFD" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="14,10">
-                        <TextBlock Text="Doctors/departments here are used by cycle-level Doctor/Room selection."
+                        <TextBlock Text="Doctors/departments here are used by cycle-level Doctor/Room selection. Use Ctrl+click or Shift+click to select multiple rows, then Delete."
                                    Foreground="{StaticResource BrushMuted}" FontSize="12"/>
                     </Border>
 
                     <Border Grid.Row="2" HorizontalAlignment="Stretch" Background="White" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="10">
-                        <DataGrid Name="DoctorsRoomsGrid" AutoGenerateColumns="False" CanUserAddRows="False">
+                        <DataGrid Name="DoctorsRoomsGrid" AutoGenerateColumns="False" CanUserAddRows="False"
+                                  SelectionMode="Extended" SelectionUnit="FullRow">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="ID" Binding="{Binding DoctorRoomId, Converter={StaticResource ZeroIdToEmptyStringConverter}}" IsReadOnly="True" Width="70"/>
                                 <DataGridTextColumn Header="Doctor" Binding="{Binding DoctorName, UpdateSourceTrigger=PropertyChanged}" Width="220"/>
@@ -250,6 +257,45 @@
                         <Button Content="Add" Style="{StaticResource SecondaryToolbarButton}" MinWidth="95" Margin="0,0,10,0" Click="AddDoctorRoom_OnClick"/>
                         <Button Content="Save" Style="{StaticResource SuccessToolbarButton}" MinWidth="95" Margin="0,0,10,0" Click="SaveDoctorsRooms_OnClick"/>
                         <Button Content="Delete" Style="{StaticResource SecondaryToolbarButton}" MinWidth="95" Margin="0,0,10,0" Click="DeleteDoctorRoom_OnClick"/>
+                        <Button Content="Refresh" Style="{StaticResource SecondaryToolbarButton}" MinWidth="95" Click="RefreshAll_OnClick"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Cycle Programs">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="12"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="10"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" HorizontalAlignment="Stretch" Background="#F8FAFD" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="14,10">
+                        <TextBlock Text="Cycle programs are reusable presets (code/name + sterilization type, default temp/pressure/exposure). Used by Register Load and QA flows. Soft-delete only."
+                                   Foreground="{StaticResource BrushMuted}" FontSize="12" TextWrapping="Wrap"/>
+                    </Border>
+
+                    <Border Grid.Row="2" HorizontalAlignment="Stretch" Background="White" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="10">
+                        <DataGrid Name="CycleProgramsGrid" AutoGenerateColumns="False" CanUserAddRows="False"
+                                  SelectionMode="Extended" SelectionUnit="FullRow" HorizontalScrollBarVisibility="Auto">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID" Binding="{Binding CycleProgramId, Converter={StaticResource ZeroIdToEmptyStringConverter}}" IsReadOnly="True" Width="70"/>
+                                <DataGridTextColumn Header="Code" Binding="{Binding ProgramCode, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
+                                <DataGridTextColumn Header="Name" Binding="{Binding ProgramName, UpdateSourceTrigger=PropertyChanged}" MinWidth="220" Width="*"/>
+                                <DataGridTextColumn Header="Sterilization Type" Binding="{Binding SterilizationType, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+                                <DataGridTextColumn Header="Temp °C" Binding="{Binding DefaultTemperatureC, UpdateSourceTrigger=PropertyChanged}" Width="90"/>
+                                <DataGridTextColumn Header="Pressure" Binding="{Binding DefaultPressure, UpdateSourceTrigger=PropertyChanged}" Width="90"/>
+                                <DataGridTextColumn Header="Exposure (min)" Binding="{Binding DefaultExposureMinutes, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
+                                <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}" IsReadOnly="True" Width="90"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="Add" Style="{StaticResource SecondaryToolbarButton}" MinWidth="95" Margin="0,0,10,0" Click="AddCycleProgram_OnClick"/>
+                        <Button Content="Save" Style="{StaticResource SuccessToolbarButton}" MinWidth="95" Margin="0,0,10,0" Click="SaveCyclePrograms_OnClick"/>
+                        <Button Content="Delete" Style="{StaticResource SecondaryToolbarButton}" MinWidth="95" Margin="0,0,10,0" Click="DeleteCycleProgram_OnClick"/>
                         <Button Content="Refresh" Style="{StaticResource SecondaryToolbarButton}" MinWidth="95" Click="RefreshAll_OnClick"/>
                     </StackPanel>
                 </Grid>
@@ -277,7 +323,7 @@
                         <Border Grid.Row="0" Background="#F4F7FA" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="12,10">
                             <StackPanel>
                                 <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource BrushMuted}" LineHeight="18"
-                                           Text="Security &amp; compliance view (Admin only). Passwords and clinical free-text are never stored in audit payloads. Use filters to investigate sign-ins, profile changes, sterilization edits, and master data changes. Export supports Excel. Automatic rollback is not provided—use Old/New JSON for manual recovery if needed."/>
+                                           Text="Security &amp; compliance view (Admin only). Passwords and clinical free-text are never stored in audit payloads. Use filters to investigate sign-ins, profile changes, sterilization edits, and master data changes. Grids support multi-select (Ctrl+click / Shift+click) for copy. Export supports Excel. Automatic rollback is not provided—use Old/New JSON for manual recovery if needed."/>
                             </StackPanel>
                         </Border>
 
@@ -320,6 +366,7 @@
 
                         <TextBlock Grid.Row="4" Text="Audit log" FontWeight="SemiBold" Foreground="{StaticResource BrushPrimary}" FontSize="13"/>
                         <DataGrid Grid.Row="5" Name="AuditLogGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                                  SelectionMode="Extended" SelectionUnit="FullRow"
                                   HeadersVisibility="Column" FontSize="12">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="UTC time" Binding="{Binding EventAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="130"/>
@@ -336,7 +383,8 @@
                         </DataGrid>
 
                         <TextBlock Grid.Row="6" Text="Security alerts (e.g. repeated failed logins)" FontWeight="SemiBold" Foreground="{StaticResource BrushPrimary}" FontSize="13"/>
-                        <DataGrid Grid.Row="7" Name="AuditAlertsGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MaxHeight="120">
+                        <DataGrid Grid.Row="7" Name="AuditAlertsGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MaxHeight="120"
+                                  SelectionMode="Extended" SelectionUnit="FullRow">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="UTC time" Binding="{Binding EventAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="130"/>
                                 <DataGridTextColumn Header="Action" Binding="{Binding Action}" Width="200"/>
@@ -346,7 +394,8 @@
                         </DataGrid>
 
                         <TextBlock Grid.Row="8" Text="Recently signed-in (approx. activity)" FontWeight="SemiBold" Foreground="{StaticResource BrushPrimary}" FontSize="13"/>
-                        <DataGrid Grid.Row="9" Name="AuditActiveGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MaxHeight="140">
+                        <DataGrid Grid.Row="9" Name="AuditActiveGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MaxHeight="140"
+                                  SelectionMode="Extended" SelectionUnit="FullRow">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Account ID" Binding="{Binding AccountId}" Width="90"/>
                                 <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="140"/>
@@ -356,7 +405,8 @@
                         </DataGrid>
 
                         <TextBlock Grid.Row="10" Text="High-volume sterilization updates (last hour, possible bulk edit)" FontWeight="SemiBold" Foreground="{StaticResource BrushPrimary}" FontSize="13"/>
-                        <DataGrid Grid.Row="11" Name="AuditVolumeGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MaxHeight="120">
+                        <DataGrid Grid.Row="11" Name="AuditVolumeGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MaxHeight="120"
+                                  SelectionMode="Extended" SelectionUnit="FullRow">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Actor ID" Binding="{Binding ActorAccountId}" Width="80"/>
                                 <DataGridTextColumn Header="Username" Binding="{Binding ActorUsername}" Width="140"/>
@@ -370,6 +420,83 @@
                 </ScrollViewer>
             </TabItem>
 
+            <TabItem Header="Print history">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="10"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Background="#F4F7FA" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                        <TextBlock Foreground="{StaticResource BrushMuted}" FontSize="12" TextWrapping="Wrap"
+                                   Text="Idempotent record of every print job initiated from this app. Filter by date, report type, or user to investigate audit questions. Each row carries a CorrelationId — duplicate retries are deduplicated automatically."/>
+                    </Border>
+
+                    <Grid Grid.Row="1" Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="160"/>
+                            <ColumnDefinition Width="160"/>
+                            <ColumnDefinition Width="160"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Style="{StaticResource CaptionLabel}" Text="From"/>
+                            <DatePicker Name="PrintLogFromDate"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                            <TextBlock Style="{StaticResource CaptionLabel}" Text="To"/>
+                            <DatePicker Name="PrintLogToDate"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Margin="0,0,12,0">
+                            <TextBlock Style="{StaticResource CaptionLabel}" Text="Report type"/>
+                            <ComboBox Name="PrintLogReportTypeCombo">
+                                <ComboBoxItem Content="(all)" IsSelected="True"/>
+                                <ComboBoxItem Content="LoadRecord"/>
+                                <ComboBoxItem Content="BILogSheet"/>
+                                <ComboBoxItem Content="LeakTest"/>
+                                <ComboBoxItem Content="BowieDick"/>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Grid.Column="3" Margin="0,0,12,0">
+                            <TextBlock Style="{StaticResource CaptionLabel}" Text="User search"/>
+                            <TextBox Name="PrintLogUserSearchBox" ToolTip="Search by username, first name, or last name."/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Bottom">
+                            <Button Name="PrintLogRefreshButton" Content="Refresh" Style="{StaticResource PrimaryButton}" MinWidth="100" Margin="0,0,8,0" Click="PrintLogRefresh_OnClick"/>
+                            <Button Name="PrintLogExportCsvButton" Content="Export CSV" Style="{StaticResource SecondaryToolbarButton}" MinWidth="120" Click="PrintLogExportCsv_OnClick"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Grid.Row="3" Background="White" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="10">
+                        <DataGrid Name="PrintLogGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                                  SelectionMode="Extended" SelectionUnit="FullRow"
+                                  HeadersVisibility="Column" FontSize="12">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID" Binding="{Binding PrintLogId}" Width="70"/>
+                                <DataGridTextColumn Header="UTC time" Binding="{Binding PrintedAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" Width="150"/>
+                                <DataGridTextColumn Header="User" Binding="{Binding PrintedByUsername}" Width="120"/>
+                                <DataGridTextColumn Header="Report" Binding="{Binding ReportType}" Width="120"/>
+                                <DataGridTextColumn Header="Cycle" Binding="{Binding CycleNo}" Width="90"/>
+                                <DataGridTextColumn Header="QA test" Binding="{Binding QaTestId}" Width="80"/>
+                                <DataGridTextColumn Header="Printer" Binding="{Binding PrinterName}" Width="180"/>
+                                <DataGridTextColumn Header="Copies" Binding="{Binding Copies}" Width="60"/>
+                                <DataGridTextColumn Header="Correlation" Binding="{Binding CorrelationId}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Name="PrintLogPrevButton" Content="◀ Prev" Style="{StaticResource SecondaryToolbarButton}" MinWidth="90" Margin="0,0,8,0" Click="PrintLogPrev_OnClick"/>
+                        <TextBlock Name="PrintLogPagerText" VerticalAlignment="Center" Foreground="{StaticResource BrushMuted}" FontSize="12" Margin="4,0,12,0"/>
+                        <Button Name="PrintLogNextButton" Content="Next ▶" Style="{StaticResource SecondaryToolbarButton}" MinWidth="90" Click="PrintLogNext_OnClick"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
             <TabItem Header="Accounts">
                 <Grid Margin="12">
                     <Grid.RowDefinitions>
@@ -380,12 +507,13 @@
 
                     <Border Grid.Row="0" HorizontalAlignment="Stretch" Background="#F8FAFD" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="14,10">
                         <TextBlock TextWrapping="Wrap"
-                                   Text="Read-only list. Latest activity is the newest Security audit for that account (profile update, sign-in, registration)."
+                                   Text="Read-only list. Latest activity is the newest Security audit for that account (profile update, sign-in, registration). You can select multiple rows with Ctrl+click or Shift+click (e.g. for copy)."
                                    Foreground="{StaticResource BrushMuted}" FontSize="12"/>
                     </Border>
 
                     <Border Grid.Row="2" HorizontalAlignment="Stretch" Background="White" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="10">
-                        <DataGrid Name="AccountsGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+                        <DataGrid Name="AccountsGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                                  SelectionMode="Extended" SelectionUnit="FullRow">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="ID" Binding="{Binding AccountId, Converter={StaticResource ZeroIdToEmptyStringConverter}}" Width="70"/>
                                 <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="140"/>

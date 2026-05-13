@@ -10,6 +10,18 @@ public sealed class Sterilization
     public DateTime CycleDateTime { get; set; }
     public DateTime? CycleTimeIn { get; set; }
     public DateTime? CycleTimeOut { get; set; }
+
+    /// <summary>UTC when this row was first inserted (load registration).</summary>
+    public DateTime CreatedAt { get; set; }
+
+    /// <summary>Account that created/registered this load (FK to tbl_account_login.account_id).</summary>
+    public int? CreatedBy { get; set; }
+
+    /// <summary>UTC when this row was last updated.</summary>
+    public DateTime UpdatedAt { get; set; }
+
+    /// <summary>Account that last updated this load (FK to tbl_account_login.account_id).</summary>
+    public int? UpdatedBy { get; set; }
     public string OperatorName { get; set; } = string.Empty;
     public decimal? TemperatureC { get; set; }
     public decimal? TemperatureInC { get; set; }
@@ -96,5 +108,8 @@ public sealed class QaTest
     public string? Unit { get; set; }
     public string? Notes { get; set; }
     public string? PerformedBy { get; set; }
+    public int? ApprovedBy { get; set; }
+    public DateTime? ApprovedAt { get; set; }
+    public string? ApprovedRemarks { get; set; }
     public byte[] RowVersion { get; set; } = [];
 }

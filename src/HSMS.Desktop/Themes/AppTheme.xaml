@@ -157,6 +157,10 @@
         <Setter Property="Background" Value="{StaticResource BrushSuccess}"/>
     </Style>
 
+    <Style x:Key="DangerToolbarButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+        <Setter Property="Background" Value="{StaticResource BrushDanger}"/>
+    </Style>
+
     <Style TargetType="DataGrid">
         <Setter Property="Background" Value="{StaticResource BrushCard}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>

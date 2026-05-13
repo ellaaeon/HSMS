@@ -27,4 +27,10 @@ public sealed class PrintLog
     public int Copies { get; set; } = 1;
     public string? ParametersJson { get; set; }
     public Guid CorrelationId { get; set; }
+
+    /// <summary>Engine version (e.g. <c>questpdf-1</c>, <c>rdlc-1</c>). Set by the renderer at log time.</summary>
+    public string? ReportVersion { get; set; }
+
+    /// <summary>Logical workstation identifier (defaults to client machine name).</summary>
+    public string? StationId { get; set; }
 }

@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP
 C:\Users\adiza\HSMS\src\HSMS.Desktop\App.xaml
-101881174440
+16649013982
 
-181403304118
-2382117253368
-Controls\BiPlusMinusNumericEntry.xaml;Controls\BiPlusMinusSignToggle.xaml;CreateAccountWindow.xaml;LoginWindow.xaml;MaintenanceWindow.xaml;MainWindow.xaml;PortalLandingWindow.xaml;ProfileWindow.xaml;Themes\AppTheme.xaml;Ui\HsmsAlertWindow.xaml;
+531753496187
+2571293866538
+AnalyticsDrilldownWindow.xaml;Controls\BiPlusMinusNumericEntry.xaml;Controls\BiPlusMinusSignToggle.xaml;CreateAccountWindow.xaml;LoginWindow.xaml;MaintenanceWindow.xaml;MainWindow.xaml;PortalLandingWindow.xaml;ProfileWindow.xaml;QaTestsWindow.xaml;TestRecordsWindow.xaml;Themes\AppTheme.xaml;Ui\HsmsAlertWindow.xaml;Views\AdvancedQaFilterWindow.xaml;Views\SelectCycleWindow.xaml;Views\TextPromptWindow.xaml;
 
 False
 

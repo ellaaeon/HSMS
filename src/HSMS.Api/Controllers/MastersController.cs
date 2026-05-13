@@ -28,6 +28,8 @@ public sealed class MastersController(HsmsDbContext dbContext, ICurrentUserAcces
                     SterilizerNo = x.SterilizerNumber,
                     Model = x.Model,
                     Manufacturer = x.Manufacturer,
+                    SerialNumber = x.SerialNumber,
+                    MaintenanceSchedule = x.MaintenanceSchedule,
                     PurchaseDate = x.PurchaseDate,
                     IsActive = x.IsActive
                 })
@@ -142,6 +144,8 @@ public sealed class MastersController(HsmsDbContext dbContext, ICurrentUserAcces
             SterilizerNumber = sterilizerNo,
             Model = string.IsNullOrWhiteSpace(request.Model) ? null : request.Model.Trim(),
             Manufacturer = string.IsNullOrWhiteSpace(request.Manufacturer) ? null : request.Manufacturer.Trim(),
+            SerialNumber = string.IsNullOrWhiteSpace(request.SerialNumber) ? null : request.SerialNumber.Trim(),
+            MaintenanceSchedule = string.IsNullOrWhiteSpace(request.MaintenanceSchedule) ? null : request.MaintenanceSchedule.Trim(),
             PurchaseDate = request.PurchaseDate,
             IsActive = true
         };
@@ -173,6 +177,8 @@ public sealed class MastersController(HsmsDbContext dbContext, ICurrentUserAcces
             SterilizerNo = entity.SterilizerNumber,
             Model = entity.Model,
             Manufacturer = entity.Manufacturer,
+            SerialNumber = entity.SerialNumber,
+            MaintenanceSchedule = entity.MaintenanceSchedule,
             PurchaseDate = entity.PurchaseDate,
             IsActive = entity.IsActive
         });
@@ -192,8 +198,12 @@ public sealed class MastersController(HsmsDbContext dbContext, ICurrentUserAcces
         entity.SterilizerNumber = request.SterilizerNo.Trim();
         entity.Model = string.IsNullOrWhiteSpace(request.Model) ? null : request.Model.Trim();
         entity.Manufacturer = string.IsNullOrWhiteSpace(request.Manufacturer) ? null : request.Manufacturer.Trim();
+        entity.SerialNumber = string.IsNullOrWhiteSpace(request.SerialNumber) ? null : request.SerialNumber.Trim();
+        entity.MaintenanceSchedule = string.IsNullOrWhiteSpace(request.MaintenanceSchedule) ? null : request.MaintenanceSchedule.Trim();
         entity.PurchaseDate = request.PurchaseDate;
         entity.IsActive = true;
+        entity.DisabledAt = null;
+        entity.DisabledBy = null;
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
@@ -220,7 +230,10 @@ public sealed class MastersController(HsmsDbContext dbContext, ICurrentUserAcces
         var entity = await dbContext.SterilizerUnits.SingleOrDefaultAsync(x => x.SterilizerId == id, cancellationToken);
         if (entity is null) return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Sterilizer not found." });
 
+        if (!entity.IsActive) return NoContent();
         entity.IsActive = false;
+        entity.DisabledAt = DateTime.UtcNow;
+        entity.DisabledBy = currentUserAccessor.GetCurrentUser()?.AccountId;
         await dbContext.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
@@ -278,7 +291,10 @@ public sealed class MastersController(HsmsDbContext dbContext, ICurrentUserAcces
         var entity = await dbContext.Departments.SingleOrDefaultAsync(x => x.DepartmentId == id, cancellationToken);
         if (entity is null) return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Department not found." });
 
+        if (!entity.IsActive) return NoContent();
         entity.IsActive = false;
+        entity.DisabledAt = DateTime.UtcNow;
+        entity.DisabledBy = currentUserAccessor.GetCurrentUser()?.AccountId;
         await dbContext.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
@@ -344,7 +360,10 @@ public sealed class MastersController(HsmsDbContext dbContext, ICurrentUserAcces
         var entity = await dbContext.DoctorRooms.SingleOrDefaultAsync(x => x.DoctorRoomId == id, cancellationToken);
         if (entity is null) return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Doctor/room not found." });
 
+        if (!entity.IsActive) return NoContent();
         entity.IsActive = false;
+        entity.DisabledAt = DateTime.UtcNow;
+        entity.DisabledBy = currentUserAccessor.GetCurrentUser()?.AccountId;
         await dbContext.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
@@ -437,7 +456,10 @@ public sealed class MastersController(HsmsDbContext dbContext, ICurrentUserAcces
         var entity = await dbContext.DepartmentItems.SingleOrDefaultAsync(x => x.DeptItemId == id, cancellationToken);
         if (entity is null) return NotFound(new ApiError { Code = "NOT_FOUND", Message = "Department item not found." });
 
+        if (!entity.IsActive) return NoContent();
         entity.IsActive = false;
+        entity.DisabledAt = DateTime.UtcNow;
+        entity.DisabledBy = currentUserAccessor.GetCurrentUser()?.AccountId;
         await dbContext.SaveChangesAsync(cancellationToken);
         return NoContent();
     }

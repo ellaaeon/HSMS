@@ -11,6 +11,9 @@ public sealed class BiLogSheetRowDto
     /// <summary>RowVersion for optimistic concurrency when updating BI log fields from the grid.</summary>
     public string RowVersion { get; set; } = string.Empty;
 
+    /// <summary>Account that registered/created this load (tbl_sterilization.created_by). Null for legacy rows.</summary>
+    public int? CreatedByAccountId { get; set; }
+
     public DateTime CycleDateTimeUtc { get; set; }
     public string SterilizerNo { get; set; } = string.Empty;
     public string CycleNo { get; set; } = string.Empty;

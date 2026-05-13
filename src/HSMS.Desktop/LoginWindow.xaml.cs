@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.IO;
 using Microsoft.EntityFrameworkCore;
 using HSMS.Application.Services;
 using HSMS.Shared.Contracts;
@@ -153,9 +154,13 @@ public partial class LoginWindow : Window
         }
         catch (Exception ex)
         {
-            var detail = ex is DbUpdateException dbe && dbe.InnerException is not null
-                ? dbe.InnerException.Message
-                : ex.InnerException?.Message ?? ex.Message;
+            var detail = ex switch
+            {
+                DbUpdateException dbe when dbe.InnerException is not null => dbe.InnerException.Message,
+                FileNotFoundException fnf => fnf.FileName is null ? fnf.Message : $"{fnf.Message}\nMissing: {fnf.FileName}",
+                DllNotFoundException dll => dll.Message,
+                _ => ex.InnerException?.Message ?? ex.Message
+            };
             ShowError($"Cannot complete sign-in. {detail}");
         }
         finally

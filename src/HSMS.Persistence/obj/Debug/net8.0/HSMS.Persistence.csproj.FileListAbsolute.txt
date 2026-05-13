@@ -10,3 +10,4 @@ C:\Users\adiza\HSMS\src\HSMS.Persistence\obj\Debug\net8.0\HSMS.Persistence.dll
 C:\Users\adiza\HSMS\src\HSMS.Persistence\obj\Debug\net8.0\refint\HSMS.Persistence.dll
 C:\Users\adiza\HSMS\src\HSMS.Persistence\obj\Debug\net8.0\HSMS.Persistence.pdb
 C:\Users\adiza\HSMS\src\HSMS.Persistence\obj\Debug\net8.0\ref\HSMS.Persistence.dll
+c:\Users\adiza\HSMS\src\HSMS.Persistence\obj\Debug\net8.0\HSMS.Persistence.sourcelink.json

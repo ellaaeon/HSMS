@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Linq;
 using System.IO;
 using System.Text;
 using System.Windows;
@@ -9,8 +10,10 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Threading;
+using HSMS.Application.Exports;
 using HSMS.Application.Services;
 using HSMS.Shared.Contracts;
+using HSMS.Shared.Contracts.Reporting;
 using HSMS.Shared.Time;
 using Microsoft.Win32;
 
@@ -19,21 +22,29 @@ namespace HSMS.Desktop;
 public partial class MaintenanceWindow : Window
 {
     private readonly IHsmsDataService _data;
+    private readonly IExcelExportService? _excel;
     private readonly ObservableCollection<SterilizerListItemDto> _sterilizers = [];
     private readonly ObservableCollection<DepartmentListItemDto> _departments = [];
     private readonly ObservableCollection<DepartmentItemListItemDto> _departmentItems = [];
     private readonly ObservableCollection<DoctorRoomListItemDto> _doctorRooms = [];
+    private readonly ObservableCollection<CycleProgramListItemDto> _cyclePrograms = [];
     private readonly ObservableCollection<AccountListItemDto> _accounts = [];
     private readonly ObservableCollection<AuditLogRowDto> _auditRows = [];
     private readonly ObservableCollection<AuditSecurityAlertDto> _auditAlerts = [];
     private readonly ObservableCollection<AccountRecentActivityDto> _auditActive = [];
     private readonly ObservableCollection<AuditVolumeRowDto> _auditVolume = [];
+    private readonly ObservableCollection<PrintLogRowDto> _printLogs = [];
+    private const int PrintLogPageSize = 100;
+    private int _printLogPage = 0;
 
     public ObservableCollection<DepartmentListItemDto> DepartmentLookup { get; } = [];
 
-    public MaintenanceWindow(IHsmsDataService dataService)
+    public MaintenanceWindow(IHsmsDataService dataService) : this(dataService, null) { }
+
+    public MaintenanceWindow(IHsmsDataService dataService, IExcelExportService? excelExportService)
     {
         _data = dataService;
+        _excel = excelExportService;
         InitializeComponent();
         DataContext = this;
 
@@ -41,11 +52,16 @@ public partial class MaintenanceWindow : Window
         DepartmentsGrid.ItemsSource = _departments;
         DepartmentItemsGrid.ItemsSource = _departmentItems;
         DoctorsRoomsGrid.ItemsSource = _doctorRooms;
+        CycleProgramsGrid.ItemsSource = _cyclePrograms;
         AccountsGrid.ItemsSource = _accounts;
         AuditLogGrid.ItemsSource = _auditRows;
         AuditAlertsGrid.ItemsSource = _auditAlerts;
         AuditActiveGrid.ItemsSource = _auditActive;
         AuditVolumeGrid.ItemsSource = _auditVolume;
+        PrintLogGrid.ItemsSource = _printLogs;
+        PrintLogFromDate.SelectedDate = DateTime.Today.AddDays(-30);
+        PrintLogToDate.SelectedDate = DateTime.Today;
+        UpdatePrintLogPagerText();
 
         SterilizersGrid.PreviewKeyDown += SterilizersGrid_OnPreviewKeyDown;
         SterilizersGrid.CurrentCellChanged += SterilizersGrid_OnCurrentCellChanged;
@@ -84,12 +100,16 @@ public partial class MaintenanceWindow : Window
             var (accounts, accErr) = await _data.GetAccountsAsync();
             if (accErr is not null && !accErr.StartsWith("404", StringComparison.Ordinal))
                 throw new InvalidOperationException(accErr);
+            var (cyclePrograms, cpErr) = await _data.GetCycleProgramsAsync();
+            if (cpErr is not null && !cpErr.StartsWith("404", StringComparison.Ordinal))
+                throw new InvalidOperationException(cpErr);
 
             // Maintenance should show ALL master rows (active + inactive) so admins can manage them.
             ResetCollection(_sterilizers, sterilizers.OrderBy(x => x.SterilizerId));
             ResetCollection(_departments, departments.OrderBy(x => x.DepartmentName));
             ResetCollection(_departmentItems, departmentItems.OrderBy(x => x.DepartmentName).ThenBy(x => x.ItemName));
             ResetCollection(_doctorRooms, doctorRooms.OrderBy(x => x.DoctorRoomId));
+            ResetCollection(_cyclePrograms, cyclePrograms.OrderBy(x => x.ProgramName));
             ResetCollection(_accounts, accounts.OrderBy(x => x.AccountId));
 
             // Dropdown lookup for Department Items tab.
@@ -175,6 +195,27 @@ public partial class MaintenanceWindow : Window
         }
     }
 
+    private const string AdminPanelBulkDeleteDetail =
+        "Saved records are removed from the database; unsaved new rows are discarded.";
+
+    /// <summary>Confirm deleting one or many master-data rows (Admin Setup grids). Returns false if nothing selected or user cancels.</summary>
+    private bool TryConfirmAdminPanelBulkDelete(int selectedCount)
+    {
+        if (selectedCount <= 0)
+        {
+            return false;
+        }
+
+        var noun = selectedCount == 1 ? "this row" : $"{selectedCount} selected rows";
+        return MessageBox.Show(this,
+                $"Delete {noun}? {AdminPanelBulkDeleteDetail}",
+                "HSMS — Confirm delete",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question,
+                MessageBoxResult.No)
+            == MessageBoxResult.Yes;
+    }
+
     private async void RefreshAll_OnClick(object sender, RoutedEventArgs e) => await RefreshAllAsync();
 
     private void AddSterilizer_OnClick(object sender, RoutedEventArgs e)
@@ -193,14 +234,26 @@ public partial class MaintenanceWindow : Window
     {
         await RunSafeAsync(async () =>
         {
-            if (SterilizersGrid.SelectedItem is not SterilizerListItemDto selected) return;
-            if (selected.SterilizerId <= 0)
+            var selected = SterilizersGrid.SelectedItems.OfType<SterilizerListItemDto>().ToList();
+            if (!TryConfirmAdminPanelBulkDelete(selected.Count))
             {
-                _sterilizers.Remove(selected);
                 return;
             }
-            var err = await _data.DeleteSterilizerAsync(selected.SterilizerId);
-            if (err is not null) throw new InvalidOperationException(err);
+
+            foreach (var row in selected.Where(r => r.SterilizerId <= 0).ToList())
+            {
+                _sterilizers.Remove(row);
+            }
+
+            foreach (var row in selected.Where(r => r.SterilizerId > 0))
+            {
+                var err = await _data.DeleteSterilizerAsync(row.SterilizerId);
+                if (err is not null)
+                {
+                    throw new InvalidOperationException(err);
+                }
+            }
+
             await RefreshAllAsync();
         });
     }
@@ -221,14 +274,26 @@ public partial class MaintenanceWindow : Window
     {
         await RunSafeAsync(async () =>
         {
-            if (DepartmentsGrid.SelectedItem is not DepartmentListItemDto selected) return;
-            if (selected.DepartmentId <= 0)
+            var selected = DepartmentsGrid.SelectedItems.OfType<DepartmentListItemDto>().ToList();
+            if (!TryConfirmAdminPanelBulkDelete(selected.Count))
             {
-                _departments.Remove(selected);
                 return;
             }
-            var err = await _data.DeleteDepartmentAsync(selected.DepartmentId);
-            if (err is not null) throw new InvalidOperationException(err);
+
+            foreach (var row in selected.Where(r => r.DepartmentId <= 0).ToList())
+            {
+                _departments.Remove(row);
+            }
+
+            foreach (var row in selected.Where(r => r.DepartmentId > 0))
+            {
+                var err = await _data.DeleteDepartmentAsync(row.DepartmentId);
+                if (err is not null)
+                {
+                    throw new InvalidOperationException(err);
+                }
+            }
+
             await RefreshAllAsync();
         });
     }
@@ -255,14 +320,26 @@ public partial class MaintenanceWindow : Window
     {
         await RunSafeAsync(async () =>
         {
-            if (DepartmentItemsGrid.SelectedItem is not DepartmentItemListItemDto selected) return;
-            if (selected.DeptItemId <= 0)
+            var selected = DepartmentItemsGrid.SelectedItems.OfType<DepartmentItemListItemDto>().ToList();
+            if (!TryConfirmAdminPanelBulkDelete(selected.Count))
             {
-                _departmentItems.Remove(selected);
                 return;
             }
-            var err = await _data.DeleteDepartmentItemAsync(selected.DeptItemId);
-            if (err is not null) throw new InvalidOperationException(err);
+
+            foreach (var row in selected.Where(r => r.DeptItemId <= 0).ToList())
+            {
+                _departmentItems.Remove(row);
+            }
+
+            foreach (var row in selected.Where(r => r.DeptItemId > 0))
+            {
+                var err = await _data.DeleteDepartmentItemAsync(row.DeptItemId);
+                if (err is not null)
+                {
+                    throw new InvalidOperationException(err);
+                }
+            }
+
             await RefreshAllAsync();
         });
     }
@@ -696,6 +773,8 @@ public partial class MaintenanceWindow : Window
                     SterilizerNo = row.SterilizerNo.Trim(),
                     Model = row.Model,
                     Manufacturer = row.Manufacturer,
+                    SerialNumber = row.SerialNumber,
+                    MaintenanceSchedule = row.MaintenanceSchedule,
                     PurchaseDate = row.PurchaseDate
                 };
                 if (row.SterilizerId <= 0)
@@ -797,14 +876,28 @@ public partial class MaintenanceWindow : Window
     {
         await RunSafeAsync(async () =>
         {
-            if (DoctorsRoomsGrid.SelectedItem is not DoctorRoomListItemDto selected) return;
-            if (selected.DoctorRoomId <= 0)
+            // Snapshot selected rows: ObservableCollection/SelectedItems mutate when we remove items.
+            var selected = DoctorsRoomsGrid.SelectedItems.OfType<DoctorRoomListItemDto>().ToList();
+            if (!TryConfirmAdminPanelBulkDelete(selected.Count))
             {
-                _doctorRooms.Remove(selected);
                 return;
             }
-            var err = await _data.DeleteDoctorRoomAsync(selected.DoctorRoomId);
-            if (err is not null) throw new InvalidOperationException(err);
+
+            // Remove not-yet-saved rows locally; persisted rows go through the API.
+            foreach (var row in selected.Where(r => r.DoctorRoomId <= 0).ToList())
+            {
+                _doctorRooms.Remove(row);
+            }
+
+            foreach (var row in selected.Where(r => r.DoctorRoomId > 0))
+            {
+                var err = await _data.DeleteDoctorRoomAsync(row.DoctorRoomId);
+                if (err is not null)
+                {
+                    throw new InvalidOperationException(err);
+                }
+            }
+
             await RefreshAllAsync();
         });
     }
@@ -869,7 +962,7 @@ public partial class MaintenanceWindow : Window
         ResetCollection(_auditVolume, vol);
     }
 
-    private void AuditExportCsvButton_OnClick(object sender, RoutedEventArgs e)
+    private async void AuditExportCsvButton_OnClick(object sender, RoutedEventArgs e)
     {
         if (_auditRows.Count == 0)
         {
@@ -879,11 +972,33 @@ public partial class MaintenanceWindow : Window
 
         var dlg = new SaveFileDialog
         {
-            Filter = "CSV (*.csv)|*.csv",
-            FileName = $"hsms-audit-{DateTime.Now:yyyyMMdd-HHmm}.csv"
+            Filter = "Excel (*.xlsx)|*.xlsx|CSV (*.csv)|*.csv",
+            FileName = $"hsms-audit-{DateTime.Now:yyyyMMdd-HHmm}.xlsx"
         };
         if (dlg.ShowDialog(this) != true)
         {
+            return;
+        }
+
+        var ext = Path.GetExtension(dlg.FileName).ToLowerInvariant();
+        if (ext == ".xlsx" && _excel is not null)
+        {
+            await using var output = File.Create(dlg.FileName);
+            var columns = new List<ExcelColumn<AuditLogRowDto>>
+            {
+                new("Event at (UTC)", r => r.EventAtUtc, "yyyy-mm-dd hh:mm:ss"),
+                new("Actor id", r => r.ActorAccountId),
+                new("Actor", r => r.ActorUsername),
+                new("Module", r => r.Module),
+                new("Action", r => r.Action),
+                new("Entity", r => r.EntityName),
+                new("Entity id", r => r.EntityId),
+                new("Device", r => r.ClientMachine),
+                new("Old values", r => r.OldValuesJson),
+                new("New values", r => r.NewValuesJson)
+            };
+            await _excel.WriteSheetAsync("Audit log", columns, _auditRows.ToList(), output, progress: null, CancellationToken.None);
+            MessageBox.Show(this, $"Saved {dlg.FileName}", "HSMS", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
@@ -928,6 +1043,203 @@ public partial class MaintenanceWindow : Window
         {
             MessageBox.Show(this, ex.Message, "HSMS", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+    }
+
+    private void AddCycleProgram_OnClick(object sender, RoutedEventArgs e)
+    {
+        var newRow = new CycleProgramListItemDto { IsActive = true };
+        _cyclePrograms.Add(newRow);
+        FocusCellAfterAdd(CycleProgramsGrid, newRow, "Code");
+    }
+
+    private async void SaveCyclePrograms_OnClick(object sender, RoutedEventArgs e)
+    {
+        await SaveCycleProgramsAsync();
+    }
+
+    private async Task SaveCycleProgramsAsync()
+    {
+        await RunSafeAsync(async () =>
+        {
+            CommitGridEdits(CycleProgramsGrid);
+            foreach (var row in _cyclePrograms)
+            {
+                if (string.IsNullOrWhiteSpace(row.ProgramName)) continue;
+                var payload = new CycleProgramUpsertDto
+                {
+                    ProgramCode = row.ProgramCode?.Trim() ?? string.Empty,
+                    ProgramName = row.ProgramName.Trim(),
+                    SterilizationType = row.SterilizationType,
+                    DefaultTemperatureC = row.DefaultTemperatureC,
+                    DefaultPressure = row.DefaultPressure,
+                    DefaultExposureMinutes = row.DefaultExposureMinutes
+                };
+                if (row.CycleProgramId <= 0)
+                {
+                    var (created, err) = await _data.CreateCycleProgramAsync(payload);
+                    if (err is not null) throw new InvalidOperationException(err);
+                    if (created is not null)
+                    {
+                        row.CycleProgramId = created.CycleProgramId;
+                        row.ProgramCode = created.ProgramCode;
+                    }
+                }
+                else
+                {
+                    var err = await _data.UpdateCycleProgramAsync(row.CycleProgramId, payload);
+                    if (err is not null) throw new InvalidOperationException(err);
+                }
+            }
+            await RefreshAllAsync();
+        });
+    }
+
+    private async void DeleteCycleProgram_OnClick(object sender, RoutedEventArgs e)
+    {
+        await RunSafeAsync(async () =>
+        {
+            var selected = CycleProgramsGrid.SelectedItems.OfType<CycleProgramListItemDto>().ToList();
+            if (!TryConfirmAdminPanelBulkDelete(selected.Count))
+            {
+                return;
+            }
+
+            foreach (var row in selected.Where(r => r.CycleProgramId <= 0).ToList())
+            {
+                _cyclePrograms.Remove(row);
+            }
+
+            foreach (var row in selected.Where(r => r.CycleProgramId > 0))
+            {
+                var err = await _data.DeleteCycleProgramAsync(row.CycleProgramId);
+                if (err is not null)
+                {
+                    throw new InvalidOperationException(err);
+                }
+            }
+
+            await RefreshAllAsync();
+        });
+    }
+
+    private async void PrintLogRefresh_OnClick(object sender, RoutedEventArgs e)
+    {
+        _printLogPage = 0;
+        await LoadPrintLogsAsync();
+    }
+
+    private async void PrintLogPrev_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (_printLogPage <= 0) return;
+        _printLogPage--;
+        await LoadPrintLogsAsync();
+    }
+
+    private async void PrintLogNext_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (_printLogs.Count < PrintLogPageSize) return;
+        _printLogPage++;
+        await LoadPrintLogsAsync();
+    }
+
+    private async Task LoadPrintLogsAsync()
+    {
+        await RunSafeAsync(async () =>
+        {
+            var reportType = (PrintLogReportTypeCombo.SelectedItem as ComboBoxItem)?.Content as string;
+            if (string.Equals(reportType, "(all)", StringComparison.Ordinal)) reportType = null;
+
+            var query = new PrintLogQueryDto
+            {
+                FromUtc = HsmsDeploymentTimeZone.DeploymentCalendarDayStartUtc(PrintLogFromDate.SelectedDate),
+                ToUtc = HsmsDeploymentTimeZone.DeploymentCalendarDayEndUtc(PrintLogToDate.SelectedDate),
+                ReportType = reportType,
+                UserSearch = string.IsNullOrWhiteSpace(PrintLogUserSearchBox.Text) ? null : PrintLogUserSearchBox.Text.Trim(),
+                Skip = _printLogPage * PrintLogPageSize,
+                Take = PrintLogPageSize
+            };
+
+            var (rows, err) = await _data.ListPrintLogsAsync(query);
+            if (err is not null)
+            {
+                throw new InvalidOperationException(err);
+            }
+
+            ResetCollection(_printLogs, rows);
+            UpdatePrintLogPagerText();
+        });
+    }
+
+    private void UpdatePrintLogPagerText()
+    {
+        var first = _printLogPage * PrintLogPageSize + 1;
+        var last = first + Math.Max(0, _printLogs.Count - 1);
+        PrintLogPagerText.Text = _printLogs.Count == 0
+            ? $"Page {_printLogPage + 1} (no rows)"
+            : $"Rows {first}–{last} (page {_printLogPage + 1})";
+        PrintLogPrevButton.IsEnabled = _printLogPage > 0;
+        PrintLogNextButton.IsEnabled = _printLogs.Count >= PrintLogPageSize;
+    }
+
+    private async void PrintLogExportCsv_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (_printLogs.Count == 0)
+        {
+            MessageBox.Show(this, "Refresh the print history first, then export.", "HSMS", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var dlg = new SaveFileDialog
+        {
+            Filter = "Excel (*.xlsx)|*.xlsx|CSV (*.csv)|*.csv",
+            FileName = $"hsms-print-log-{DateTime.Now:yyyyMMdd-HHmm}.xlsx"
+        };
+        if (dlg.ShowDialog(this) != true) return;
+
+        var ext = Path.GetExtension(dlg.FileName).ToLowerInvariant();
+        if (ext == ".xlsx" && _excel is not null)
+        {
+            await using var output = File.Create(dlg.FileName);
+            var columns = new List<ExcelColumn<PrintLogRowDto>>
+            {
+                new("Print log id", r => r.PrintLogId),
+                new("Printed at (UTC)", r => r.PrintedAtUtc, "yyyy-mm-dd hh:mm:ss"),
+                new("User", r => r.PrintedByUsername),
+                new("Report", r => r.ReportType),
+                new("Cycle", r => r.CycleNo),
+                new("QA test id", r => r.QaTestId),
+                new("Printer", r => r.PrinterName),
+                new("Copies", r => r.Copies),
+                new("Correlation id", r => r.CorrelationId.ToString())
+            };
+            await _excel.WriteSheetAsync("Print log", columns, _printLogs.ToList(), output, progress: null, CancellationToken.None);
+            MessageBox.Show(this, $"Saved {dlg.FileName}", "HSMS", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        static string Csv(string? s)
+        {
+            if (s is null) return "\"\"";
+            var t = s.Replace("\"", "\"\"", StringComparison.Ordinal);
+            return $"\"{t}\"";
+        }
+
+        var sb = new StringBuilder();
+        sb.AppendLine("print_log_id,printed_at_utc,user,report_type,cycle_no,qa_test_id,printer_name,copies,correlation_id");
+        foreach (var r in _printLogs)
+        {
+            sb.Append(r.PrintLogId).Append(',');
+            sb.Append(Csv(r.PrintedAtUtc.ToString("u", CultureInfo.InvariantCulture))).Append(',');
+            sb.Append(Csv(r.PrintedByUsername)).Append(',');
+            sb.Append(Csv(r.ReportType)).Append(',');
+            sb.Append(Csv(r.CycleNo)).Append(',');
+            sb.Append(r.QaTestId?.ToString(CultureInfo.InvariantCulture) ?? "").Append(',');
+            sb.Append(Csv(r.PrinterName)).Append(',');
+            sb.Append(r.Copies.ToString(CultureInfo.InvariantCulture)).Append(',');
+            sb.AppendLine(Csv(r.CorrelationId.ToString()));
+        }
+        File.WriteAllText(dlg.FileName, sb.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+        MessageBox.Show(this, $"Saved {dlg.FileName}", "HSMS", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 }
 

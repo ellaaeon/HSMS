@@ -28,6 +28,8 @@ public sealed partial class HsmsLocalDataService
             SterilizerNumber = sterilizerNo,
             Model = string.IsNullOrWhiteSpace(request.Model) ? null : request.Model.Trim(),
             Manufacturer = string.IsNullOrWhiteSpace(request.Manufacturer) ? null : request.Manufacturer.Trim(),
+            SerialNumber = string.IsNullOrWhiteSpace(request.SerialNumber) ? null : request.SerialNumber.Trim(),
+            MaintenanceSchedule = string.IsNullOrWhiteSpace(request.MaintenanceSchedule) ? null : request.MaintenanceSchedule.Trim(),
             PurchaseDate = request.PurchaseDate,
             IsActive = true
         };
@@ -51,6 +53,8 @@ public sealed partial class HsmsLocalDataService
             SterilizerNo = entity.SterilizerNumber,
             Model = entity.Model,
             Manufacturer = entity.Manufacturer,
+            SerialNumber = entity.SerialNumber,
+            MaintenanceSchedule = entity.MaintenanceSchedule,
             PurchaseDate = entity.PurchaseDate,
             IsActive = entity.IsActive
         }, null);
@@ -70,12 +74,16 @@ public sealed partial class HsmsLocalDataService
             return "Sterilizer not found.";
         }
 
-        var oldSnap = new { entity.SterilizerNumber, entity.Model, entity.Manufacturer, entity.PurchaseDate };
+        var oldSnap = new { entity.SterilizerNumber, entity.Model, entity.Manufacturer, entity.SerialNumber, entity.MaintenanceSchedule, entity.PurchaseDate };
         entity.SterilizerNumber = request.SterilizerNo.Trim();
         entity.Model = string.IsNullOrWhiteSpace(request.Model) ? null : request.Model.Trim();
         entity.Manufacturer = string.IsNullOrWhiteSpace(request.Manufacturer) ? null : request.Manufacturer.Trim();
+        entity.SerialNumber = string.IsNullOrWhiteSpace(request.SerialNumber) ? null : request.SerialNumber.Trim();
+        entity.MaintenanceSchedule = string.IsNullOrWhiteSpace(request.MaintenanceSchedule) ? null : request.MaintenanceSchedule.Trim();
         entity.PurchaseDate = request.PurchaseDate;
         entity.IsActive = true;
+        entity.DisabledAt = null;
+        entity.DisabledBy = null;
         try
         {
             await db.SaveChangesAsync(cancellationToken);
@@ -91,7 +99,7 @@ public sealed partial class HsmsLocalDataService
             "tbl_sterilizer_no",
             id.ToString(),
             oldSnap,
-            new { entity.SterilizerNumber, entity.Model, entity.Manufacturer, entity.PurchaseDate },
+            new { entity.SterilizerNumber, entity.Model, entity.Manufacturer, entity.SerialNumber, entity.MaintenanceSchedule, entity.PurchaseDate },
             cancellationToken);
         return null;
     }
@@ -111,7 +119,13 @@ public sealed partial class HsmsLocalDataService
         }
 
         var snap = new { entity.SterilizerNumber, entity.SterilizerId };
+        if (!entity.IsActive)
+        {
+            return null;
+        }
         entity.IsActive = false;
+        entity.DisabledAt = DateTime.UtcNow;
+        entity.DisabledBy = Actor();
         await db.SaveChangesAsync(cancellationToken);
         await AppendMasterAuditAsync(
             db,
@@ -144,8 +158,15 @@ public sealed partial class HsmsLocalDataService
             DepartmentName = name,
             IsActive = true
         };
-        db.Departments.Add(entity);
-        await db.SaveChangesAsync(cancellationToken);
+        try
+        {
+            db.Departments.Add(entity);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is SqlException sqlEx && (sqlEx.Number == 2627 || sqlEx.Number == 2601))
+        {
+            return (null, "This department already exists.");
+        }
         return (new DepartmentListItemDto { DepartmentId = entity.DepartmentId, DepartmentName = entity.DepartmentName, IsActive = entity.IsActive }, null);
     }
 
@@ -193,7 +214,13 @@ public sealed partial class HsmsLocalDataService
         }
 
         var snap = new { entity.DepartmentName, entity.DepartmentId };
+        if (!entity.IsActive)
+        {
+            return null;
+        }
         entity.IsActive = false;
+        entity.DisabledAt = DateTime.UtcNow;
+        entity.DisabledBy = Actor();
         await db.SaveChangesAsync(cancellationToken);
         await AppendMasterAuditAsync(
             db,
@@ -283,7 +310,13 @@ public sealed partial class HsmsLocalDataService
         }
 
         var snap = new { entity.DoctorName, entity.Room, entity.DoctorRoomId };
+        if (!entity.IsActive)
+        {
+            return null;
+        }
         entity.IsActive = false;
+        entity.DisabledAt = DateTime.UtcNow;
+        entity.DisabledBy = Actor();
         await db.SaveChangesAsync(cancellationToken);
         await AppendMasterAuditAsync(
             db,
@@ -399,7 +432,13 @@ public sealed partial class HsmsLocalDataService
         }
 
         var snap = new { entity.ItemName, entity.DepartmentId, entity.DeptItemId };
+        if (!entity.IsActive)
+        {
+            return null;
+        }
         entity.IsActive = false;
+        entity.DisabledAt = DateTime.UtcNow;
+        entity.DisabledBy = Actor();
         await db.SaveChangesAsync(cancellationToken);
         await AppendMasterAuditAsync(
             db,
@@ -410,6 +449,182 @@ public sealed partial class HsmsLocalDataService
             new { deactivated = true },
             cancellationToken);
         return null;
+    }
+
+    public async Task<(IReadOnlyList<CycleProgramListItemDto> items, string? error)> GetCycleProgramsAsync(CancellationToken cancellationToken = default)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        var rows = await db.CyclePrograms.AsNoTracking()
+            .OrderBy(x => x.ProgramName)
+            .Select(x => new CycleProgramListItemDto
+            {
+                CycleProgramId = x.CycleProgramId,
+                ProgramCode = x.ProgramCode,
+                ProgramName = x.ProgramName,
+                SterilizationType = x.SterilizationType,
+                DefaultTemperatureC = x.DefaultTemperatureC,
+                DefaultPressure = x.DefaultPressure,
+                DefaultExposureMinutes = x.DefaultExposureMinutes,
+                IsActive = x.IsActive
+            })
+            .ToListAsync(cancellationToken);
+        return (rows, null);
+    }
+
+    public async Task<(CycleProgramListItemDto? item, string? error)> CreateCycleProgramAsync(CycleProgramUpsertDto request, CancellationToken cancellationToken = default)
+    {
+        if (ForbidUnlessAdmin() is { } adminErr)
+        {
+            return (null, adminErr);
+        }
+
+        var name = request.ProgramName?.Trim();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return (null, "Program name is required.");
+        }
+
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        var code = string.IsNullOrWhiteSpace(request.ProgramCode)
+            ? GenerateCycleProgramCode(name)
+            : request.ProgramCode.Trim();
+
+        var entity = new CycleProgram
+        {
+            ProgramCode = code,
+            ProgramName = name,
+            SterilizationType = string.IsNullOrWhiteSpace(request.SterilizationType) ? null : request.SterilizationType.Trim(),
+            DefaultTemperatureC = request.DefaultTemperatureC,
+            DefaultPressure = request.DefaultPressure,
+            DefaultExposureMinutes = request.DefaultExposureMinutes,
+            IsActive = true
+        };
+
+        try
+        {
+            db.CyclePrograms.Add(entity);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is SqlException sqlEx && (sqlEx.Number == 2627 || sqlEx.Number == 2601))
+        {
+            return (null, "A cycle program with this code or name already exists.");
+        }
+
+        await AppendMasterAuditAsync(
+            db,
+            AuditActions.MastersCycleProgramCreate,
+            "tbl_cycle_programs",
+            entity.CycleProgramId.ToString(),
+            null,
+            new { entity.ProgramCode, entity.ProgramName, entity.SterilizationType },
+            cancellationToken);
+
+        return (new CycleProgramListItemDto
+        {
+            CycleProgramId = entity.CycleProgramId,
+            ProgramCode = entity.ProgramCode,
+            ProgramName = entity.ProgramName,
+            SterilizationType = entity.SterilizationType,
+            DefaultTemperatureC = entity.DefaultTemperatureC,
+            DefaultPressure = entity.DefaultPressure,
+            DefaultExposureMinutes = entity.DefaultExposureMinutes,
+            IsActive = entity.IsActive
+        }, null);
+    }
+
+    public async Task<string?> UpdateCycleProgramAsync(int id, CycleProgramUpsertDto request, CancellationToken cancellationToken = default)
+    {
+        if (ForbidUnlessAdmin() is { } e)
+        {
+            return e;
+        }
+
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        var entity = await db.CyclePrograms.SingleOrDefaultAsync(x => x.CycleProgramId == id, cancellationToken);
+        if (entity is null)
+        {
+            return "Cycle program not found.";
+        }
+
+        var oldSnap = new { entity.ProgramCode, entity.ProgramName, entity.SterilizationType, entity.DefaultTemperatureC, entity.DefaultPressure, entity.DefaultExposureMinutes };
+
+        entity.ProgramName = request.ProgramName.Trim();
+        if (!string.IsNullOrWhiteSpace(request.ProgramCode))
+        {
+            entity.ProgramCode = request.ProgramCode.Trim();
+        }
+        entity.SterilizationType = string.IsNullOrWhiteSpace(request.SterilizationType) ? null : request.SterilizationType.Trim();
+        entity.DefaultTemperatureC = request.DefaultTemperatureC;
+        entity.DefaultPressure = request.DefaultPressure;
+        entity.DefaultExposureMinutes = request.DefaultExposureMinutes;
+        entity.IsActive = true;
+        entity.DisabledAt = null;
+        entity.DisabledBy = null;
+
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is SqlException sqlEx && (sqlEx.Number == 2627 || sqlEx.Number == 2601))
+        {
+            return "A cycle program with this code or name already exists.";
+        }
+
+        await AppendMasterAuditAsync(
+            db,
+            AuditActions.MastersCycleProgramUpdate,
+            "tbl_cycle_programs",
+            id.ToString(),
+            oldSnap,
+            new { entity.ProgramCode, entity.ProgramName, entity.SterilizationType, entity.DefaultTemperatureC, entity.DefaultPressure, entity.DefaultExposureMinutes },
+            cancellationToken);
+        return null;
+    }
+
+    public async Task<string?> DeleteCycleProgramAsync(int id, CancellationToken cancellationToken = default)
+    {
+        if (ForbidUnlessAdmin() is { } e)
+        {
+            return e;
+        }
+
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        var entity = await db.CyclePrograms.SingleOrDefaultAsync(x => x.CycleProgramId == id, cancellationToken);
+        if (entity is null)
+        {
+            return "Cycle program not found.";
+        }
+
+        if (!entity.IsActive)
+        {
+            return null;
+        }
+
+        var snap = new { entity.ProgramCode, entity.ProgramName };
+        entity.IsActive = false;
+        entity.DisabledAt = DateTime.UtcNow;
+        entity.DisabledBy = Actor();
+        await db.SaveChangesAsync(cancellationToken);
+        await AppendMasterAuditAsync(
+            db,
+            AuditActions.MastersCycleProgramDeactivate,
+            "tbl_cycle_programs",
+            id.ToString(),
+            snap,
+            new { deactivated = true },
+            cancellationToken);
+        return null;
+    }
+
+    private static string GenerateCycleProgramCode(string name)
+    {
+        var compact = new string(name.Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant();
+        if (string.IsNullOrWhiteSpace(compact))
+        {
+            compact = "PROG";
+        }
+
+        return compact.Length > 16 ? compact[..16] : compact;
     }
 
     private async Task AppendMasterAuditAsync(
